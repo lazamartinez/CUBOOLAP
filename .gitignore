@@ -1,0 +1,32 @@
+# Build
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+*.exe
+*.dll
+*.obj
+*.o
+*.a
+compile_commands.json
+
+# Qt Creator
+*.pro.user
+*.qmake.stash
+
+# IDE
+.vs/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Dependencies
+vcpkg_installed/
