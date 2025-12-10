@@ -266,7 +266,7 @@ SELECT
 FROM generate_series(100, 1000) AS s;
 
 -- ============================================================================
--- DIMENSIÓN CLIENTE (5,000 registros)
+-- DIMENSIÓN CLIENTE (5,000 registros) - VERSIÓN CORREGIDA
 -- ============================================================================
 CREATE TABLE dim_cliente (
     id_cliente SERIAL PRIMARY KEY,
@@ -282,7 +282,7 @@ CREATE TABLE dim_cliente (
     id_geografia INTEGER REFERENCES dim_geografia(id_geografia)
 );
 
--- Generar 5000 clientes
+-- Generar 5000 clientes - VERSIÓN CORREGIDA
 INSERT INTO dim_cliente (codigo_cliente, nombre_completo, tipo_cliente, segmento, email, telefono, fecha_registro, limite_credito, id_geografia)
 SELECT 
     'CLI-' || LPAD(s::TEXT, 6, '0'),
@@ -312,11 +312,12 @@ SELECT
     '+54 11 ' || LPAD((s * 7 % 10000000)::TEXT, 8, '0'),
     '2020-01-01'::DATE + (random() * 1825)::INTEGER,
     ROUND((random() * 50000 + 500)::NUMERIC, 2),
-    (random() * 70 + 1)::INTEGER
+    -- CORRECCIÓN: Obtener un ID de geografía existente
+    (SELECT id_geografia FROM dim_geografia ORDER BY RANDOM() LIMIT 1)
 FROM generate_series(1, 5000) AS s;
 
 -- ============================================================================
--- TABLA DE HECHOS: VENTAS (100,000+ registros)
+-- TABLA DE HECHOS: VENTAS (100,000+ registros) - VERSIÓN COMPLETAMENTE CORREGIDA
 -- ============================================================================
 CREATE TABLE fact_ventas (
     id_venta SERIAL PRIMARY KEY,
@@ -336,7 +337,7 @@ CREATE TABLE fact_ventas (
     numero_orden VARCHAR(30)
 );
 
--- Generar 100,000 ventas con patrones estacionales realistas
+-- Generar 100,000 ventas con patrones estacionales realistas - VERSIÓN CORREGIDA
 INSERT INTO fact_ventas (
     id_tiempo, id_geografia, id_producto, id_cliente,
     cantidad, precio_unitario, descuento_porcentaje, costo_envio, impuestos,
@@ -355,16 +356,16 @@ SELECT
              ELSE (1825 + random() * 365)::INTEGER  -- 10% año 6
          END
      ) LIMIT 1),
-    -- Geografía
-    (random() * 69 + 1)::INTEGER,
-    -- Producto
-    (random() * 999 + 1)::INTEGER,
-    -- Cliente
-    (random() * 4999 + 1)::INTEGER,
+    -- Geografía: ID existente
+    (SELECT id_geografia FROM dim_geografia ORDER BY RANDOM() LIMIT 1),
+    -- Producto: ID existente
+    prod.id_producto,
+    -- Cliente: ID existente - CORRECCIÓN: usar SELECT con LIMIT 1
+    (SELECT id_cliente FROM dim_cliente ORDER BY RANDOM() LIMIT 1),
     -- Cantidad (1-50, con sesgo hacia cantidades bajas)
     GREATEST(1, (random() * random() * 50)::INTEGER),
     -- Precio unitario base
-    precio_base,
+    prod.precio_base,
     -- Descuento (0-30%, más común sin descuento)
     CASE WHEN random() < 0.7 THEN 0 ELSE ROUND((random() * 30)::NUMERIC, 2) END,
     -- Costo envío
@@ -394,7 +395,10 @@ SELECT
     'ORD-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(s::TEXT, 7, '0')
 FROM generate_series(1, 100000) AS s
 CROSS JOIN LATERAL (
-    SELECT precio_base FROM dim_producto WHERE id_producto = (random() * 999 + 1)::INTEGER LIMIT 1
+    SELECT id_producto, precio_base 
+    FROM dim_producto 
+    ORDER BY RANDOM() 
+    LIMIT 1
 ) prod;
 
 -- Actualizar totales y ganancias
@@ -407,7 +411,7 @@ UPDATE fact_ventas SET
 
 UPDATE fact_ventas SET
     ganancia = ROUND(total_venta - (cantidad * COALESCE((SELECT costo_unitario FROM dim_producto WHERE id_producto = fact_ventas.id_producto), 25.00)) - costo_envio, 2);
-
+	
 -- ============================================================================
 -- ÍNDICES PARA RENDIMIENTO OLAP
 -- ============================================================================

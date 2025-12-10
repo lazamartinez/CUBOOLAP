@@ -35,30 +35,74 @@ void VisorOlap::cargarCuboReal() {
   if (!db.isOpen())
     return;
 
-  // Consulta Aggregada Real 3D: Producto(Categoria) x Tiempo(Trimestre) x
-  // Geografia(Region)
+  // Paso 1: Obtener Dimensiones Principales (Top 5 Categorias y Regiones) para
+  // ejes
+  auto getTop = [&](const QString &field, const QString &table,
+                    const QString &idField) -> QStringList {
+    QSqlQuery q(db);
+    // Heuristic simple: Top por frecuencia en ventas
+    QString s = QString("SELECT %1 FROM %2 JOIN fact_ventas f ON f.%3 = %2.%3 "
+                        "GROUP BY %1 ORDER BY COUNT(*) DESC LIMIT 5")
+                    .arg(field, table, idField);
+
+    QStringList res;
+    if (q.exec(s)) {
+      while (q.next())
+        res << q.value(0).toString();
+    }
+    return res;
+  };
+
+  QStringList topCats = getTop("categoria", "dim_producto", "id_producto");
+  QStringList topRegs = getTop("region", "dim_geografia", "id_geografia");
+
+  if (topCats.isEmpty() || topRegs.isEmpty()) {
+    // Fallback: consulta simple sin filtros si falla la heuristica
+    topCats.clear();
+    topRegs.clear();
+  }
+
+  // Paso 2: Construir query filtrada (o general si no hay filtro)
   QString sql = R"(
       SELECT 
           p.categoria as dim_x, 
           t.trimestre as dim_y, 
-          LEFT(g.region, 8) as dim_z, 
+          g.region as dim_z, 
           SUM(f.total_venta) as valor
       FROM fact_ventas f
       JOIN dim_producto p ON f.id_producto = p.id_producto
       JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo
       JOIN dim_geografia g ON f.id_geografia = g.id_geografia
-      GROUP BY p.categoria, t.trimestre, g.region
-      LIMIT 500
   )";
 
+  QStringList wheres;
+  if (!topCats.isEmpty()) {
+    QString listStr = "'" + topCats.join("','") + "'";
+    wheres << QString("p.categoria IN (%1)").arg(listStr);
+  }
+  if (!topRegs.isEmpty()) {
+    QString listStr = "'" + topRegs.join("','") + "'";
+    wheres << QString("g.region IN (%1)").arg(listStr);
+  }
+
+  if (!wheres.isEmpty())
+    sql += " WHERE " + wheres.join(" AND ");
+
+  sql += " GROUP BY p.categoria, t.trimestre, g.region LIMIT 500";
+
+  // Ejecutar
   QSqlQuery query(db);
   if (!query.exec(sql)) {
     qDebug() << "Error Cubo 3D:" << query.lastError().text();
     return;
   }
 
-  // Mapear strings a indices 0..N
-  QStringList xKeys, yKeys, zKeys;
+  // Mapear strings a indices
+  // Usamos los top lists generados para mantener orden consistente, o dinamico
+  // si faltan
+  QStringList xKeys = topCats;
+  QStringList zKeys = topRegs;
+
   struct DatoRaw {
     QString x, y, z;
     double val;
@@ -71,15 +115,15 @@ void VisorOlap::cargarCuboReal() {
   while (query.next()) {
     DatoRaw d;
     d.x = query.value(0).toString();
-    d.y = "Q" + query.value(1).toString(); // Trimestre
+    d.y = query.value(1).toString(); // Trimestre int -> string
     d.z = query.value(2).toString();
     d.val = query.value(3).toDouble();
     datos.append(d);
 
+    // Auto-add keys if not present (por si el filtro fallo u obtuvimos
+    // fallback)
     if (!xKeys.contains(d.x))
       xKeys << d.x;
-    if (!yKeys.contains(d.y))
-      yKeys << d.y;
     if (!zKeys.contains(d.z))
       zKeys << d.z;
 
@@ -89,28 +133,34 @@ void VisorOlap::cargarCuboReal() {
       m_valorMin = d.val;
   }
 
-  // Limitar dimensiones para visualizacion limpia (Max 6x4x6)
-  xKeys = xKeys.mid(0, 6);
-  zKeys = zKeys.mid(0, 6);
-  yKeys.sort(); // Q1, Q2...
+  // Ordenar para display
+  if (xKeys.size() > 6)
+    xKeys = xKeys.mid(0, 6);
+  if (zKeys.size() > 6)
+    zKeys = zKeys.mid(0, 6);
 
   for (const auto &d : datos) {
     int ix = xKeys.indexOf(d.x);
-    int iy = yKeys.indexOf(d.y);
     int iz = zKeys.indexOf(d.z);
+    // Trimestre map
+    int iy = d.y.toInt() - 1;
+    if (iy < 0)
+      iy = 0;
+    if (iy > 3)
+      iy = 3;
 
-    if (ix >= 0 && iy >= 0 && iz >= 0) {
+    if (ix >= 0 && iz >= 0) {
       CeldaCubo celda;
       celda.dimX = ix;
       celda.dimY = iy;
       celda.dimZ = iz;
       celda.nombreDimX = d.x;
-      celda.nombreDimY = d.y;
+      celda.nombreDimY = "Q" + d.y;
       celda.nombreDimZ = d.z;
       celda.valor = d.val;
       celda.valorSecundario = 0;
       celda.etiqueta =
-          QString("%1\n%2 - %3\n$%4").arg(d.x, d.y, d.z).arg(d.val);
+          QString("%1\nQ%2 - %3\n$%4").arg(d.x, d.y, d.z).arg(d.val, 0, 'f', 0);
       m_celdas.append(celda);
     }
   }
@@ -132,9 +182,6 @@ void VisorOlap::cargarDatos(const QVector<CeldaCubo> &celdas) {
 
   update();
 }
-// ... Rest of file (limpiarSeleccion, obtenerSeleccion, paintEvent helper
-// methods)... Re-implementing helper methods to ensure file completeness if
-// used with write_to_file
 
 void VisorOlap::limpiarSeleccion() {
   for (auto &c : m_celdas) {
