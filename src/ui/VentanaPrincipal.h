@@ -29,10 +29,12 @@ private slots:
 private:
   void configurarInterfaz();
   void mostrarIntroduccion();
+  void aplicarTema();
 
   QStackedWidget *contenedorCentral;
   DashboardReconocimiento *m_dashboard;
   AnalizadorEsquema *m_analizador;
+  class IndicadorFase *m_indicadorFase;
 };
 
 #endif // VENTANAPRINCIPAL_H

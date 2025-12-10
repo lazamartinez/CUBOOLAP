@@ -50,6 +50,14 @@ set(PROJECT_SOURCES
     src/core/GeneradorReportes.h
     src/ui/PantallaIntroduccion.cpp
     src/ui/PantallaIntroduccion.h
+    src/ui/GestorTemas.cpp
+    src/ui/GestorTemas.h
+    src/ui/IndicadorFase.cpp
+    src/ui/IndicadorFase.h
+    src/ui/ToastNotifier.cpp
+    src/ui/ToastNotifier.h
+    src/ui/HistorialConsultas.cpp
+    src/ui/HistorialConsultas.h
 )
 
 add_executable(CuboVision

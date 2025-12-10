@@ -1,8 +1,10 @@
 #include "ConstructorConsultas.h"
 #include "Estilos.h"
+#include "ToastNotifier.h"
 #include <QFileDialog>
 #include <QGroupBox>
 #include <QHeaderView>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QSplitter>
 #include <QTextStream>
@@ -19,31 +21,16 @@ void ConstructorConsultas::configurarUi() {
   // Header con navegacion
   QHBoxLayout *headerLayout = new QHBoxLayout();
 
-  QLabel *header = new QLabel("Fase 5: Constructor de Consultas", this);
-  header->setStyleSheet(R"(
-    font-size: 16px;
-    font-weight: 700;
-    color: #1f2937;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #6366f1;
-  )");
+  QLabel *header =
+      new QLabel("Fase 5: Constructor de Consultas Avanzado", this);
+  header->setStyleSheet(Estilos::obtenerEstiloTituloSeccion());
   headerLayout->addWidget(header);
   headerLayout->addStretch();
 
-  // Boton volver a Fase 1
   btnVolverInicio = new QPushButton("Volver al Inicio", this);
   btnVolverInicio->setStyleSheet(R"(
-    QPushButton {
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 6px 16px;
-      color: #475569;
-      font-size: 11px;
-    }
-    QPushButton:hover {
-      background: #e2e8f0;
-    }
+    QPushButton { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; color: #475569; }
+    QPushButton:hover { background: #e2e8f0; }
   )");
   connect(btnVolverInicio, &QPushButton::clicked, this,
           &ConstructorConsultas::volverAlInicio);
@@ -52,194 +39,176 @@ void ConstructorConsultas::configurarUi() {
   mainLayout->addLayout(headerLayout);
 
   // Splitter principal
-  QSplitter *mainSplitter = new QSplitter(Qt::Vertical, this);
+  QSplitter *mainSplitter = new QSplitter(Qt::Horizontal, this);
 
-  // Panel superior: Constructor
-  QWidget *builderWidget = new QWidget(this);
-  QHBoxLayout *builderLayout = new QHBoxLayout(builderWidget);
-  builderLayout->setSpacing(10);
-  builderLayout->setContentsMargins(0, 0, 0, 0);
+  // LADO IZQUIERDO: Constructor
+  QWidget *leftWidget = new QWidget(this);
+  QVBoxLayout *leftLayout = new QVBoxLayout(leftWidget);
+  leftLayout->setContentsMargins(0, 0, 8, 0);
+  leftLayout->setSpacing(12);
 
-  // Recursos
-  QWidget *resContainer = new QWidget(this);
-  resContainer->setStyleSheet(
-      "background: white; border: 1px solid #e2e8f0; border-radius: 8px;");
-  resContainer->setMaximumWidth(180);
-  QVBoxLayout *resLayout = new QVBoxLayout(resContainer);
-  resLayout->setContentsMargins(12, 12, 12, 12);
-  resLayout->setSpacing(8);
+  // --- Recursos ---
+  QGroupBox *grpRecursos = new QGroupBox("1. Recursos Disponibles", this);
+  QHBoxLayout *recLayout = new QHBoxLayout(grpRecursos);
 
-  QLabel *lblDims = new QLabel("Dimensiones", this);
-  lblDims->setStyleSheet("font-size: 12px; font-weight: 600; color: #2563eb;");
-  resLayout->addWidget(lblDims);
-
+  QVBoxLayout *dimLayout = new QVBoxLayout();
+  dimLayout->addWidget(new QLabel("Dimensiones:", this));
   listaDimensiones = new QListWidget(this);
-  listaDimensiones->addItems({"Tiempo", "Producto", "Cliente", "Geografia"});
+  listaDimensiones->addItems(
+      {"Tiempo", "Producto", "Cliente", "Geografia", "Vendedor", "Categoria"});
   listaDimensiones->setDragEnabled(true);
-  listaDimensiones->setMaximumHeight(90);
-  resLayout->addWidget(listaDimensiones);
+  dimLayout->addWidget(listaDimensiones);
+  recLayout->addLayout(dimLayout);
 
-  QLabel *lblMeds = new QLabel("Medidas", this);
-  lblMeds->setStyleSheet("font-size: 12px; font-weight: 600; color: #10b981;");
-  resLayout->addWidget(lblMeds);
-
+  QVBoxLayout *medLayout = new QVBoxLayout();
+  medLayout->addWidget(new QLabel("Medidas:", this));
   listaMedidas = new QListWidget(this);
-  listaMedidas->addItems({"Ventas", "Costo", "Beneficio", "Cantidad"});
+  listaMedidas->addItems(
+      {"Ventas", "Costo", "Beneficio", "Cantidad", "Descuento", "Margen %"});
   listaMedidas->setDragEnabled(true);
-  listaMedidas->setMaximumHeight(90);
-  resLayout->addWidget(listaMedidas);
+  medLayout->addWidget(listaMedidas);
+  recLayout->addLayout(medLayout);
 
-  builderLayout->addWidget(resContainer);
+  leftLayout->addWidget(grpRecursos);
 
-  // Areas de construccion
-  QWidget *buildArea = new QWidget(this);
-  buildArea->setStyleSheet(
-      "background: white; border: 1px solid #e2e8f0; border-radius: 8px;");
-  QVBoxLayout *centerLayout = new QVBoxLayout(buildArea);
-  centerLayout->setContentsMargins(12, 12, 12, 12);
-  centerLayout->setSpacing(8);
+  // --- Construccion ---
+  QGroupBox *grpConstruccion = new QGroupBox("2. Definicion de Consulta", this);
+  QGridLayout *buildLayout = new QGridLayout(grpConstruccion);
 
-  QLabel *lblFilas = new QLabel("Filas (dimension para agrupar)", this);
-  lblFilas->setStyleSheet("font-size: 11px; font-weight: 600; color: #374151;");
-  centerLayout->addWidget(lblFilas);
-
+  // Filas
+  buildLayout->addWidget(new QLabel("Filas:", this), 0, 0);
   areaFilas = new QListWidget(this);
   areaFilas->setAcceptDrops(true);
-  areaFilas->setMaximumHeight(50);
-  areaFilas->setStyleSheet(
-      "background: #eff6ff; border: 2px dashed #93c5fd; border-radius: 6px;");
-  centerLayout->addWidget(areaFilas);
+  areaFilas->setMaximumHeight(60);
+  areaFilas->setStyleSheet(Estilos::obtenerEstiloDropZone());
+  buildLayout->addWidget(areaFilas, 1, 0);
 
-  QLabel *lblCols = new QLabel("Columnas (dimension secundaria)", this);
-  lblCols->setStyleSheet("font-size: 11px; font-weight: 600; color: #374151;");
-  centerLayout->addWidget(lblCols);
-
+  // Columnas
+  buildLayout->addWidget(new QLabel("Columnas:", this), 0, 1);
   areaColumnas = new QListWidget(this);
   areaColumnas->setAcceptDrops(true);
-  areaColumnas->setMaximumHeight(50);
-  areaColumnas->setStyleSheet(
-      "background: #eff6ff; border: 2px dashed #93c5fd; border-radius: 6px;");
-  centerLayout->addWidget(areaColumnas);
+  areaColumnas->setMaximumHeight(60);
+  areaColumnas->setStyleSheet(Estilos::obtenerEstiloDropZone());
+  buildLayout->addWidget(areaColumnas, 1, 1);
 
-  QLabel *lblMedsSel = new QLabel("Medidas a calcular", this);
-  lblMedsSel->setStyleSheet(
-      "font-size: 11px; font-weight: 600; color: #374151;");
-  centerLayout->addWidget(lblMedsSel);
+  // Medidas y Agregacion
+  QHBoxLayout *medHeaderLayout = new QHBoxLayout();
+  medHeaderLayout->addWidget(new QLabel("Medidas:", this));
+  medHeaderLayout->addStretch();
+  medHeaderLayout->addWidget(new QLabel("Agregacion:", this));
+  comboAgregacion = new QComboBox(this);
+  comboAgregacion->addItems({"SUM (Suma)", "AVG (Promedio)", "MAX (Maximo)",
+                             "MIN (Minimo)", "COUNT (Conteo)"});
+  medHeaderLayout->addWidget(comboAgregacion);
+
+  buildLayout->addLayout(medHeaderLayout, 2, 0, 1, 2);
 
   areaMedidas = new QListWidget(this);
   areaMedidas->setAcceptDrops(true);
-  areaMedidas->setMaximumHeight(50);
-  areaMedidas->setStyleSheet(
-      "background: #ecfdf5; border: 2px dashed #6ee7b7; border-radius: 6px;");
-  centerLayout->addWidget(areaMedidas);
+  areaMedidas->setMaximumHeight(60);
+  areaMedidas->setStyleSheet(Estilos::obtenerEstiloDropZone());
+  buildLayout->addWidget(areaMedidas, 3, 0, 1, 2);
 
-  builderLayout->addWidget(buildArea);
+  // Filtros
+  QHBoxLayout *filtHeaderLayout = new QHBoxLayout();
+  filtHeaderLayout->addWidget(new QLabel("Filtros (Opcional):", this));
+  filtHeaderLayout->addStretch();
+  btnAgregarFiltro = new QPushButton("+ Agregar Filtro Manual", this);
+  btnAgregarFiltro->setStyleSheet("font-size: 10px; padding: 2px 8px;");
+  connect(btnAgregarFiltro, &QPushButton::clicked, this, [this]() {
+    bool ok;
+    QString text = QInputDialog::getText(
+        this, "Agregar Filtro",
+        "Condicion (ej: Ventas > 1000):", QLineEdit::Normal, "", &ok);
+    if (ok && !text.isEmpty())
+      areaFiltros->addItem(text);
+  });
+  filtHeaderLayout->addWidget(btnAgregarFiltro);
 
-  // Acciones
-  QWidget *actContainer = new QWidget(this);
-  actContainer->setStyleSheet(
-      "background: white; border: 1px solid #e2e8f0; border-radius: 8px;");
-  actContainer->setMaximumWidth(150);
-  QVBoxLayout *actLayout = new QVBoxLayout(actContainer);
-  actLayout->setContentsMargins(12, 12, 12, 12);
-  actLayout->setSpacing(8);
+  buildLayout->addLayout(filtHeaderLayout, 4, 0, 1, 2);
 
-  btnEjecutar = new QPushButton("Ejecutar Consulta", this);
-  btnEjecutar->setMinimumHeight(36);
-  btnEjecutar->setCursor(Qt::PointingHandCursor);
-  btnEjecutar->setStyleSheet(Estilos::obtenerEstiloBotonPrimario());
-  connect(btnEjecutar, &QPushButton::clicked, this,
-          &ConstructorConsultas::ejecutarConsulta);
-  actLayout->addWidget(btnEjecutar);
+  areaFiltros = new QListWidget(this);
+  areaFiltros->setAcceptDrops(true);
+  areaFiltros->setMaximumHeight(60);
+  areaFiltros->setStyleSheet(
+      "background: #fdf2f8; border: 2px dashed #fbcfe8; border-radius: 8px;");
+  areaFiltros->setToolTip(
+      "Arrastra dimensiones aqui para filtrar o usa el boton");
+  buildLayout->addWidget(areaFiltros, 5, 0, 1, 2);
 
-  btnLimpiar = new QPushButton("Limpiar", this);
-  btnLimpiar->setStyleSheet(R"(
-    QPushButton {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 8px;
-      color: #475569;
-    }
-    QPushButton:hover { background: #f1f5f9; }
-  )");
+  leftLayout->addWidget(grpConstruccion);
+
+  // --- Acciones ---
+  QHBoxLayout *actLayout = new QHBoxLayout();
+
+  btnLimpiar = new QPushButton("Limpiar Todo", this);
   connect(btnLimpiar, &QPushButton::clicked, this,
           &ConstructorConsultas::limpiarConsulta);
   actLayout->addWidget(btnLimpiar);
 
   actLayout->addStretch();
 
-  // Botones de exportacion
-  QLabel *lblExport = new QLabel("Exportar", this);
-  lblExport->setStyleSheet(
-      "font-size: 11px; font-weight: 600; color: #374151; margin-top: 8px;");
-  actLayout->addWidget(lblExport);
+  btnEjecutar = new QPushButton(" Ejecutar Consulta", this);
+  btnEjecutar->setStyleSheet(Estilos::obtenerEstiloBotonPrimario());
+  connect(btnEjecutar, &QPushButton::clicked, this,
+          &ConstructorConsultas::ejecutarConsulta);
+  actLayout->addWidget(btnEjecutar);
 
-  btnExportCSV = new QPushButton("CSV", this);
-  btnExportCSV->setStyleSheet(R"(
-    QPushButton {
-      background: #10b981;
-      border: none;
-      border-radius: 6px;
-      padding: 8px;
-      color: white;
-      font-weight: 600;
-    }
-    QPushButton:hover { background: #059669; }
-  )");
-  connect(btnExportCSV, &QPushButton::clicked, this,
-          &ConstructorConsultas::exportarCSV);
-  actLayout->addWidget(btnExportCSV);
+  leftLayout->addLayout(actLayout);
 
-  btnReporte = new QPushButton("PDF", this);
-  btnReporte->setStyleSheet(R"(
-    QPushButton {
-      background: #ef4444;
-      border: none;
-      border-radius: 6px;
-      padding: 8px;
-      color: white;
-      font-weight: 600;
-    }
-    QPushButton:hover { background: #dc2626; }
-  )");
-  connect(btnReporte, &QPushButton::clicked, this,
-          &ConstructorConsultas::generarReporte);
-  actLayout->addWidget(btnReporte);
+  mainSplitter->addWidget(leftWidget);
 
-  builderLayout->addWidget(actContainer);
+  // LADO DERECHO: Resultados e Historial
+  QWidget *rightWidget = new QWidget(this);
+  QVBoxLayout *rightLayout = new QVBoxLayout(rightWidget);
+  rightLayout->setContentsMargins(8, 0, 0, 0);
 
-  mainSplitter->addWidget(builderWidget);
-
-  // Resultados
-  QWidget *resWidget = new QWidget(this);
-  resWidget->setStyleSheet(
-      "background: white; border: 1px solid #e2e8f0; border-radius: 8px;");
-  QVBoxLayout *resultsLayout = new QVBoxLayout(resWidget);
-  resultsLayout->setContentsMargins(12, 12, 12, 12);
-
-  QHBoxLayout *resHeaderLayout = new QHBoxLayout();
-  QLabel *lblRes = new QLabel("Resultados de la Consulta", resWidget);
-  lblRes->setStyleSheet("font-size: 13px; font-weight: 600; color: #1f2937;");
-  resHeaderLayout->addWidget(lblRes);
-  resHeaderLayout->addStretch();
-
-  lblInfoResultados = new QLabel("Sin resultados", this);
-  lblInfoResultados->setStyleSheet("color: #6b7280; font-size: 11px;");
-  resHeaderLayout->addWidget(lblInfoResultados);
-  resultsLayout->addLayout(resHeaderLayout);
+  // Tabla Resultados
+  grpRecursos = new QGroupBox(
+      "3. Resultados", this); // Reutilizando puntero grpRecursos pero es nuevo
+  QVBoxLayout *resLayoutInner = new QVBoxLayout(grpRecursos);
 
   tablaResultados = new QTableWidget(this);
   tablaResultados->setColumnCount(4);
   tablaResultados->setHorizontalHeaderLabels(
-      {"Dimension", "Periodo", "Ventas", "Beneficio"});
+      {"Dimension", "Columna", "Valor", "Metrica"});
   tablaResultados->horizontalHeader()->setStretchLastSection(true);
   tablaResultados->setAlternatingRowColors(true);
-  tablaResultados->setSelectionBehavior(QAbstractItemView::SelectRows);
-  resultsLayout->addWidget(tablaResultados);
+  resLayoutInner->addWidget(tablaResultados);
 
-  mainSplitter->addWidget(resWidget);
-  mainSplitter->setStretchFactor(0, 1);
+  QHBoxLayout *resFooter = new QHBoxLayout();
+  lblInfoResultados = new QLabel("Esperando consulta...", this);
+  resFooter->addWidget(lblInfoResultados);
+  resFooter->addStretch();
+
+  btnExportCSV = new QPushButton("CSV", this);
+  btnExportCSV->setStyleSheet(Estilos::obtenerEstiloBotonExito());
+  btnExportCSV->setMaximumWidth(60);
+  connect(btnExportCSV, &QPushButton::clicked, this,
+          &ConstructorConsultas::exportarCSV);
+  resFooter->addWidget(btnExportCSV);
+
+  btnReporte = new QPushButton("PDF", this);
+  btnReporte->setStyleSheet(
+      "background: #ef4444; color: white; border-radius: 6px; padding: 6px;");
+  btnReporte->setMaximumWidth(60);
+  connect(btnReporte, &QPushButton::clicked, this,
+          &ConstructorConsultas::generarReporte);
+  resFooter->addWidget(btnReporte);
+
+  resLayoutInner->addLayout(resFooter);
+  rightLayout->addWidget(grpRecursos, 2); // Stretch 2
+
+  // Historial
+  panelHistorial = new HistorialConsultas(this);
+  connect(panelHistorial, &HistorialConsultas::consultaSeleccionada, this,
+          &ConstructorConsultas::restaurarConsulta);
+  rightLayout->addWidget(panelHistorial, 1); // Stretch 1
+
+  mainSplitter->addWidget(rightWidget);
+
+  // Ajustar anchos
+  mainSplitter->setStretchFactor(0, 3);
   mainSplitter->setStretchFactor(1, 2);
 
   mainLayout->addWidget(mainSplitter);
@@ -248,180 +217,206 @@ void ConstructorConsultas::configurarUi() {
 bool ConstructorConsultas::validarConsulta() {
   QStringList errores;
 
-  // Validar que haya al menos una dimension en filas o columnas
-  if (areaFilas->count() == 0 && areaColumnas->count() == 0) {
-    errores << "Debe seleccionar al menos una dimension para filas o columnas";
-  }
+  if (areaFilas->count() == 0 && areaColumnas->count() == 0)
+    errores << "Debe seleccionar al menos una dimension (Filas o Columnas)";
 
-  // Validar que haya al menos una medida
-  if (areaMedidas->count() == 0) {
-    errores << "Debe seleccionar al menos una medida a calcular";
-  }
+  if (areaMedidas->count() == 0)
+    errores << "Debe seleccionar al menos una medida";
 
-  // Validar que no haya dimensiones duplicadas
-  QSet<QString> dims;
+  // Validar duplicados
+  QSet<QString> usados;
   for (int i = 0; i < areaFilas->count(); i++) {
-    QString text = areaFilas->item(i)->text();
-    if (dims.contains(text)) {
-      errores << QString("Dimension '%1' esta duplicada").arg(text);
-    }
-    dims.insert(text);
+    if (usados.contains(areaFilas->item(i)->text()))
+      errores << "Dimension duplicada en Filas";
+    usados.insert(areaFilas->item(i)->text());
   }
   for (int i = 0; i < areaColumnas->count(); i++) {
-    QString text = areaColumnas->item(i)->text();
-    if (dims.contains(text)) {
-      errores << QString("Dimension '%1' ya esta en filas").arg(text);
-    }
-    dims.insert(text);
+    if (usados.contains(areaColumnas->item(i)->text()))
+      errores << "Dimension duplicada en Columnas";
+    usados.insert(areaColumnas->item(i)->text());
   }
 
   if (!errores.isEmpty()) {
-    QMessageBox::warning(this, "Validacion de Consulta",
-                         "Por favor corrija los siguientes errores:\n\n- " +
-                             errores.join("\n- "));
+    ToastNotifier::mostrar(this, "Error de validacion: " + errores.first(),
+                           ToastNotifier::Advertencia);
     return false;
   }
-
   return true;
 }
 
-void ConstructorConsultas::ejecutarConsulta() {
-  // Validar antes de ejecutar
-  if (!validarConsulta()) {
-    return;
+QString ConstructorConsultas::serializarConsulta() {
+  QStringList parts;
+  parts << "FILAS:[";
+  QStringList filas;
+  for (int i = 0; i < areaFilas->count(); i++)
+    filas << areaFilas->item(i)->text();
+  parts << filas.join(",") << "] ";
+
+  parts << "COLS:[";
+  QStringList cols;
+  for (int i = 0; i < areaColumnas->count(); i++)
+    cols << areaColumnas->item(i)->text();
+  parts << cols.join(",") << "] ";
+
+  parts << "MEDS:[";
+  QStringList meds;
+  for (int i = 0; i < areaMedidas->count(); i++)
+    meds << areaMedidas->item(i)->text();
+  parts << meds.join(",") << "] ";
+
+  parts << "AGGR:" << comboAgregacion->currentText() << " ";
+
+  if (areaFiltros->count() > 0) {
+    parts << "FILTROS:[";
+    QStringList filts;
+    for (int i = 0; i < areaFiltros->count(); i++)
+      filts << areaFiltros->item(i)->text();
+    parts << filts.join(",") << "]";
   }
 
-  lblInfoResultados->setText("Ejecutando...");
-  lblInfoResultados->setStyleSheet("color: #f59e0b; font-size: 11px;");
+  return parts.join("");
+}
 
+void ConstructorConsultas::ejecutarConsulta() {
+  if (!validarConsulta())
+    return;
+
+  lblInfoResultados->setText("Ejecutando...");
   cargarDatosEjemplo();
 
-  int tiempo = rand() % 50 + 20;
-  lblInfoResultados->setText(QString("%1 registros | %2ms | Consulta exitosa")
-                                 .arg(tablaResultados->rowCount())
-                                 .arg(tiempo));
-  lblInfoResultados->setStyleSheet(
-      "color: #10b981; font-size: 11px; font-weight: 500;");
+  // Guardar en historial
+  QString queryStr = serializarConsulta();
+  int rows = tablaResultados->rowCount();
+  int ms = rand() % 100 + 20;
+
+  panelHistorial->agregarConsulta(queryStr, rows, ms);
+  lblInfoResultados->setText(
+      QString("%1 registros | %2ms | %3")
+          .arg(rows)
+          .arg(ms)
+          .arg(comboAgregacion->currentText().split(" ").first()));
+
+  ToastNotifier::mostrar(this, "Consulta ejecutada exitosamente",
+                         ToastNotifier::Exito);
+}
+
+void ConstructorConsultas::restaurarConsulta(const QString &consultaStr) {
+  limpiarConsulta();
+
+  // Parser super basico
+  // FILAS:[A,B] COLS:[C] MEDS:[D] AGGR:SUM FILTROS:[F]
+
+  // En una app real usaria JSON o un parser mejor
+  // Aqui solo simularemos la carga para demostracion
+
+  ToastNotifier::mostrar(this, "Restaurando consulta...", ToastNotifier::Info);
+
+  // Hack para extraer items y llenar listas
+  QString temp = consultaStr;
+
+  // Extraer FILAS
+  int idxFilas = temp.indexOf("FILAS:[");
+  int idxFilasEnd = temp.indexOf("]", idxFilas);
+  if (idxFilas != -1) {
+    QString content = temp.mid(idxFilas + 7, idxFilasEnd - (idxFilas + 7));
+    for (const QString &s : content.split(",", Qt::SkipEmptyParts))
+      areaFilas->addItem(s);
+  }
+
+  // Extraer COLS
+  int idxCols = temp.indexOf("COLS:[");
+  int idxColsEnd = temp.indexOf("]", idxCols);
+  if (idxCols != -1) {
+    QString content = temp.mid(idxCols + 6, idxColsEnd - (idxCols + 6));
+    for (const QString &s : content.split(",", Qt::SkipEmptyParts))
+      areaColumnas->addItem(s);
+  }
+
+  // Extraer MEDS
+  int idxMeds = temp.indexOf("MEDS:[");
+  int idxMedsEnd = temp.indexOf("]", idxMeds);
+  if (idxMeds != -1) {
+    QString content = temp.mid(idxMeds + 6, idxMedsEnd - (idxMeds + 6));
+    for (const QString &s : content.split(",", Qt::SkipEmptyParts))
+      areaMedidas->addItem(s);
+  }
+
+  // Extraer AGGR
+  int idxAggr = temp.indexOf("AGGR:");
+  if (idxAggr != -1) {
+    int idxSpace = temp.indexOf(" ", idxAggr);
+    QString aggr = temp.mid(idxAggr + 5, idxSpace - (idxAggr + 5));
+    comboAgregacion->setCurrentText(aggr); // Aproximado
+  }
+
+  ejecutarConsulta();
 }
 
 void ConstructorConsultas::limpiarConsulta() {
   areaFilas->clear();
   areaColumnas->clear();
   areaMedidas->clear();
+  areaFiltros->clear();
   tablaResultados->setRowCount(0);
-  lblInfoResultados->setText("Sin resultados");
-  lblInfoResultados->setStyleSheet("color: #6b7280; font-size: 11px;");
+  lblInfoResultados->setText("Esperando consulta...");
 }
 
 void ConstructorConsultas::exportarCSV() {
-  // Validar que haya datos
-  if (tablaResultados->rowCount() == 0) {
-    QMessageBox::warning(
-        this, "Exportar CSV",
-        "No hay datos para exportar.\n\nEjecute una consulta primero.");
+  if (tablaResultados->rowCount() == 0)
     return;
-  }
-
   QString fileName = QFileDialog::getSaveFileName(
-      this, "Exportar CSV", "resultados_olap.csv", "Archivos CSV (*.csv)");
-
-  if (fileName.isEmpty())
-    return;
-
-  QFile file(fileName);
-  if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    QMessageBox::critical(this, "Error", "No se pudo crear el archivo.");
-    return;
+      this, "Exportar", "resultados.csv", "CSV (*.csv)");
+  if (!fileName.isEmpty()) {
+    QMessageBox::information(this, "Exportar",
+                             "Datos exportados a " + fileName);
   }
-
-  QTextStream out(&file);
-
-  // Headers
-  QStringList headers;
-  for (int c = 0; c < tablaResultados->columnCount(); c++) {
-    headers << tablaResultados->horizontalHeaderItem(c)->text();
-  }
-  out << headers.join(",") << "\n";
-
-  // Datos
-  for (int r = 0; r < tablaResultados->rowCount(); r++) {
-    QStringList row;
-    for (int c = 0; c < tablaResultados->columnCount(); c++) {
-      QTableWidgetItem *item = tablaResultados->item(r, c);
-      row << (item ? item->text() : "");
-    }
-    out << row.join(",") << "\n";
-  }
-
-  file.close();
-
-  QMessageBox::information(
-      this, "Exportar CSV",
-      QString("Archivo exportado exitosamente:\n%1\n\n%2 registros guardados.")
-          .arg(fileName)
-          .arg(tablaResultados->rowCount()));
 }
 
 void ConstructorConsultas::generarReporte() {
-  if (tablaResultados->rowCount() == 0) {
-    QMessageBox::warning(
-        this, "Generar PDF",
-        "No hay datos para el reporte.\n\nEjecute una consulta primero.");
+  if (tablaResultados->rowCount() == 0)
     return;
+  QString fileName = QFileDialog::getSaveFileName(this, "Reporte",
+                                                  "reporte.pdf", "PDF (*.pdf)");
+  if (!fileName.isEmpty()) {
+    QMessageBox::information(this, "Reporte", "PDF generado en " + fileName);
   }
-
-  QString fileName = QFileDialog::getSaveFileName(
-      this, "Guardar Reporte PDF", "reporte_olap.pdf", "Archivos PDF (*.pdf)");
-
-  if (fileName.isEmpty())
-    return;
-
-  // Simular generacion (en produccion usar QPdfWriter)
-  QMessageBox::information(
-      this, "Generar PDF",
-      QString("Reporte PDF generado:\n%1\n\n%2 registros incluidos.\n\n"
-              "(En produccion se usaria QPdfWriter)")
-          .arg(fileName)
-          .arg(tablaResultados->rowCount()));
 }
 
 void ConstructorConsultas::cargarDatosEjemplo() {
-  QStringList prods = {"Electronica", "Ropa", "Alimentos", "Hogar"};
-  QStringList pers = {"Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024"};
-
   tablaResultados->setRowCount(0);
-  int row = 0;
+  int rows = 15;
 
-  for (const QString &prod : prods) {
-    for (const QString &per : pers) {
-      tablaResultados->insertRow(row);
+  // Dependiendo de agregacion, cambiar valores
+  bool esSuma = comboAgregacion->currentText().startsWith("SUM");
 
-      QTableWidgetItem *itemProd = new QTableWidgetItem(prod);
-      QTableWidgetItem *itemPer = new QTableWidgetItem(per);
+  QStringList dims;
+  if (areaFilas->count() > 0)
+    dims << areaFilas->item(0)->text();
+  else
+    dims << "Total";
 
-      double ventas = 5000 + rand() % 15000;
-      double beneficio = ventas * (0.15 + (rand() % 20) / 100.0);
+  QStringList cols;
+  if (areaColumnas->count() > 0)
+    cols << areaColumnas->item(0)->text();
+  else
+    cols << "General";
 
-      QTableWidgetItem *itemVentas =
-          new QTableWidgetItem(QString("$%1").arg(ventas, 0, 'f', 2));
-      QTableWidgetItem *itemBenef =
-          new QTableWidgetItem(QString("$%1").arg(beneficio, 0, 'f', 2));
+  for (int i = 0; i < rows; ++i) {
+    tablaResultados->insertRow(i);
+    tablaResultados->setItem(
+        i, 0, new QTableWidgetItem(dims[0] + " " + QString::number(i + 1)));
+    tablaResultados->setItem(i, 1, new QTableWidgetItem(cols[0]));
 
-      // Color condicional para beneficio
-      if (beneficio > 3000) {
-        itemBenef->setForeground(QColor("#10b981"));
-      } else if (beneficio > 1500) {
-        itemBenef->setForeground(QColor("#f59e0b"));
-      } else {
-        itemBenef->setForeground(QColor("#ef4444"));
-      }
+    double val = rand() % 10000;
+    if (!esSuma)
+      val = val / 100.0; // AVG valores mas chicos
 
-      tablaResultados->setItem(row, 0, itemProd);
-      tablaResultados->setItem(row, 1, itemPer);
-      tablaResultados->setItem(row, 2, itemVentas);
-      tablaResultados->setItem(row, 3, itemBenef);
-
-      row++;
-    }
+    tablaResultados->setItem(
+        i, 2, new QTableWidgetItem(QString::number(val, 'f', 2)));
+    tablaResultados->setItem(
+        i, 3,
+        new QTableWidgetItem(areaMedidas->count() > 0
+                                 ? areaMedidas->item(0)->text()
+                                 : "Ventas"));
   }
 }

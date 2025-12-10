@@ -1,19 +1,22 @@
 #ifndef CONSTRUCTORCONSULTAS_H
 #define CONSTRUCTORCONSULTAS_H
 
+#include "HistorialConsultas.h"
+#include <QComboBox>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QWidget>
 
+
 /**
- * @brief Constructor visual de consultas OLAP (Fase 5)
+ * @brief Constructor visual de consultas OLAP (Fase 5) - Avanzado
  *
- * Permite crear consultas arrastrando dimensiones y medidas,
- * ejecutarlas con validaciones, y exportar los resultados.
+ * Soporta Drag & Drop avanzado, Filtros, Agregaciones y Historial.
  */
 class ConstructorConsultas : public QWidget {
   Q_OBJECT
@@ -22,7 +25,6 @@ public:
   explicit ConstructorConsultas(QWidget *parent = nullptr);
 
 signals:
-  /// Emitida cuando el usuario quiere volver al inicio
   void volverAlInicio();
 
 private slots:
@@ -30,11 +32,13 @@ private slots:
   void generarReporte();
   void limpiarConsulta();
   void exportarCSV();
+  void restaurarConsulta(const QString &consultaStr);
 
 private:
   void configurarUi();
   void cargarDatosEjemplo();
   bool validarConsulta();
+  QString serializarConsulta();
 
   // Listas de recursos
   QListWidget *listaDimensiones;
@@ -44,6 +48,13 @@ private:
   QListWidget *areaFilas;
   QListWidget *areaColumnas;
   QListWidget *areaMedidas;
+  QListWidget *areaFiltros; // Nuevo: Area de filtros
+
+  // Controles de agregacion
+  QComboBox *comboAgregacion; // SUM, AVG, MAX, MIN
+
+  // Panel Historial
+  HistorialConsultas *panelHistorial;
 
   // Botones
   QPushButton *btnEjecutar;
@@ -51,6 +62,7 @@ private:
   QPushButton *btnReporte;
   QPushButton *btnExportCSV;
   QPushButton *btnVolverInicio;
+  QPushButton *btnAgregarFiltro; // Nuevo boton
 
   // Resultados
   QTableWidget *tablaResultados;
