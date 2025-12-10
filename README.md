@@ -2,6 +2,16 @@
 
 Sistema de analisis OLAP (Online Analytical Processing) con visualizacion 2.5D interactiva, desarrollado en C++20 con Qt 6.5 y PostgreSQL.
 
+## Capturas de Pantalla
+
+### Pantalla de Inicio y Conexion
+
+![Pantalla de Inicio](docs/screenshots/pantalla_inicio.png)
+
+### Visor OLAP 2.5D Interactivo
+
+![Visor OLAP](docs/screenshots/visor_olap.png)
+
 ## Descripcion
 
 Cubo Vision es una plataforma integral de analisis multidimensional que transforma bases de datos PostgreSQL en experiencias interactivas de analisis visual. El sistema guia al usuario a traves de un flujo inteligente en 5 fases:
@@ -17,6 +27,8 @@ Cubo Vision es una plataforma integral de analisis multidimensional que transfor
 - Deteccion automatica de tablas de hechos y dimensiones
 - Analisis de Foreign Keys y relaciones entre tablas
 - Visualizacion isometrica 2.5D con QPainter
+- Cubo denso interactivo con seleccion de celdas
+- Panel de analisis con estadisticas en tiempo real
 - Graficos interactivos con QtCharts
 - Importacion de archivos SQL para poblar la base de datos
 - Interfaz moderna con efecto glassmorphism
@@ -101,6 +113,7 @@ CUBOOLAP/
 │   ├── semilla.sql         # Datos basicos de prueba
 │   └── semilla_completa.sql # Datos completos (100K+ registros)
 ├── docs/
+│   ├── screenshots/        # Capturas de pantalla
 │   └── RESUMEN_TECNICO.md  # Documentacion tecnica
 └── src/
     ├── main.cpp
@@ -115,6 +128,7 @@ CUBOOLAP/
         ├── DashboardReconocimiento.cpp/h
         ├── EstudioModelado.cpp/h
         ├── VisorOlap.cpp/h
+        ├── PanelAnalisis.cpp/h
         ├── ConstructorConsultas.cpp/h
         └── Estilos.h
 ```
@@ -141,11 +155,20 @@ El sistema permite importar archivos SQL para poblar la base de datos:
 
 ### Navegacion por Fases
 
-- **Fase 1**: Revise el diagnostico automatico del esquema
-- **Fase 2**: Defina dimensiones y medidas arrastrando columnas
-- **Fase 3**: Monitoree la carga de datos en tiempo real
-- **Fase 4**: Explore el cubo OLAP en la visualizacion 2.5D
-- **Fase 5**: Construya consultas y genere reportes
+- **Fase 1 - Diagnostico**: Revise el diagnostico automatico del esquema
+- **Fase 2 - Modelado**: Defina dimensiones y medidas arrastrando columnas
+- **Fase 3 - Carga**: Monitoree la carga de datos en tiempo real
+- **Fase 4 - Explorador**: Explore el cubo OLAP en la visualizacion 2.5D
+- **Fase 5 - Reportes**: Construya consultas y genere reportes
+
+### Interaccion con el Visor OLAP
+
+- **Click en celda**: Seleccionar/deseleccionar celda
+- **Rueda del mouse**: Zoom in/out
+- **Arrastrar**: Pan del cubo
+- **Doble click**: Drill-down a nivel inferior
+- **Tecla R**: Resetear vista
+- **Tecla Esc**: Limpiar seleccion
 
 ## Datos de Prueba
 
@@ -154,10 +177,10 @@ El archivo `db/semilla_completa.sql` genera:
 | Tabla | Registros | Descripcion |
 |-------|-----------|-------------|
 | dim_tiempo | 2,192 | Fechas 2020-2025 |
-| dim_geografia | 500+ | Ciudades de Latinoamerica |
-| dim_producto | 1,000+ | Productos con categorias |
+| dim_geografia | 463 | Ciudades de Latinoamerica |
+| dim_producto | 936 | Productos con categorias |
 | dim_cliente | 5,000 | Clientes segmentados |
-| fact_ventas | 100,000+ | Transacciones de venta |
+| fact_ventas | 100,000 | Transacciones de venta |
 
 ## Configuracion
 

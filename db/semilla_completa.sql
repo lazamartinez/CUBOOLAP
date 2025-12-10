@@ -338,38 +338,29 @@ CREATE TABLE fact_ventas (
 );
 
 -- Generar 100,000 ventas con patrones estacionales realistas - VERSIÓN CORREGIDA
+-- IMPORTANTE: Usamos fórmulas matemáticas para generar IDs aleatorios por cada fila
 INSERT INTO fact_ventas (
     id_tiempo, id_geografia, id_producto, id_cliente,
     cantidad, precio_unitario, descuento_porcentaje, costo_envio, impuestos,
     total_venta, ganancia, metodo_pago, canal_venta, numero_orden
 )
 SELECT 
-    -- Tiempo: distribuido con sesgo hacia fechas recientes
-    (SELECT id_tiempo FROM dim_tiempo 
-     WHERE fecha = '2020-01-01'::DATE + (
-         CASE 
-             WHEN random() < 0.1 THEN (random() * 365)::INTEGER  -- 10% año 1
-             WHEN random() < 0.3 THEN (365 + random() * 365)::INTEGER  -- 20% año 2
-             WHEN random() < 0.5 THEN (730 + random() * 365)::INTEGER  -- 20% año 3
-             WHEN random() < 0.7 THEN (1095 + random() * 365)::INTEGER  -- 20% año 4
-             WHEN random() < 0.9 THEN (1460 + random() * 365)::INTEGER  -- 20% año 5
-             ELSE (1825 + random() * 365)::INTEGER  -- 10% año 6
-         END
-     ) LIMIT 1),
-    -- Geografía: ID existente
-    (SELECT id_geografia FROM dim_geografia ORDER BY RANDOM() LIMIT 1),
-    -- Producto: ID existente
-    prod.id_producto,
-    -- Cliente: ID existente - CORRECCIÓN: usar SELECT con LIMIT 1
-    (SELECT id_cliente FROM dim_cliente ORDER BY RANDOM() LIMIT 1),
+    -- Tiempo: ID aleatorio entre 1 y 2192 (total de fechas)
+    FLOOR(RANDOM() * 2192 + 1)::INTEGER,
+    -- Geografía: ID aleatorio entre 1 y 463 (total de ubicaciones)
+    FLOOR(RANDOM() * 463 + 1)::INTEGER,
+    -- Producto: ID aleatorio entre 1 y 936 (total de productos)
+    FLOOR(RANDOM() * 936 + 1)::INTEGER,
+    -- Cliente: ID aleatorio entre 1 y 5000 (total de clientes)
+    FLOOR(RANDOM() * 5000 + 1)::INTEGER,
     -- Cantidad (1-50, con sesgo hacia cantidades bajas)
-    GREATEST(1, (random() * random() * 50)::INTEGER),
-    -- Precio unitario base
-    prod.precio_base,
+    GREATEST(1, (RANDOM() * RANDOM() * 50)::INTEGER),
+    -- Precio unitario base (placeholder, se actualiza después)
+    ROUND((50 + RANDOM() * 450)::NUMERIC, 2),
     -- Descuento (0-30%, más común sin descuento)
-    CASE WHEN random() < 0.7 THEN 0 ELSE ROUND((random() * 30)::NUMERIC, 2) END,
+    CASE WHEN RANDOM() < 0.7 THEN 0 ELSE ROUND((RANDOM() * 30)::NUMERIC, 2) END,
     -- Costo envío
-    ROUND((random() * 50)::NUMERIC, 2),
+    ROUND((RANDOM() * 50)::NUMERIC, 2),
     -- Impuestos (21% IVA Argentina simplificado)
     0, -- Se calcula después
     -- Total (placeholder, se actualiza)
@@ -393,13 +384,7 @@ SELECT
     END,
     -- Número de orden
     'ORD-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(s::TEXT, 7, '0')
-FROM generate_series(1, 100000) AS s
-CROSS JOIN LATERAL (
-    SELECT id_producto, precio_base 
-    FROM dim_producto 
-    ORDER BY RANDOM() 
-    LIMIT 1
-) prod;
+FROM generate_series(1, 100000) AS s;
 
 -- Actualizar totales y ganancias
 UPDATE fact_ventas SET 

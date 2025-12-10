@@ -193,6 +193,8 @@ void VentanaPrincipal::alCargaFinalizada() {
 
   connect(visor, &VisorOlap::celdaSeleccionada, panel,
           &PanelAnalisis::mostrarInfo);
+  connect(visor, &VisorOlap::estadisticasActualizadas, panel,
+          &PanelAnalisis::actualizarEstadisticas);
 
   contenedorCentral->addWidget(containerFase4);
   contenedorCentral->setCurrentWidget(containerFase4);
