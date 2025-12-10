@@ -18,10 +18,10 @@ VisorOlap::VisorOlap(QWidget *parent)
       m_escalaAltura(2.0f), m_espaciado(50.0f) {
 
   setFocusPolicy(Qt::StrongFocus);
-  setMouseTracking(true); // Importante para hover
+  setMouseTracking(true);
   setMinimumSize(400, 300);
 
-  // Cargar datos al iniciar (intentara conectar a BD)
+  // Cargar datos al iniciar
   cargarCuboDummy();
 }
 
@@ -29,101 +29,171 @@ VisorOlap::~VisorOlap() {}
 
 void VisorOlap::cargarCuboDummy() { cargarCuboReal(); }
 
+// Helper para consultas seguras
+static QString execValue(QSqlDatabase &db, const QString &sql) {
+  QSqlQuery q(db);
+  if (q.exec(sql) && q.next())
+    return q.value(0).toString();
+  return QString();
+}
+
 void VisorOlap::cargarCuboReal() {
   m_celdas.clear();
   QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
   if (!db.isOpen())
     return;
 
-  // Paso 1: Obtener Dimensiones Principales (Top 5 Categorias y Regiones) para
-  // ejes
-  auto getTop = [&](const QString &field, const QString &table,
-                    const QString &idField) -> QStringList {
-    QSqlQuery q(db);
-    // Heuristic simple: Top por frecuencia en ventas
-    QString s = QString("SELECT %1 FROM %2 JOIN fact_ventas f ON f.%3 = %2.%3 "
-                        "GROUP BY %1 ORDER BY COUNT(*) DESC LIMIT 5")
-                    .arg(field, table, idField);
-
-    QStringList res;
-    if (q.exec(s)) {
-      while (q.next())
-        res << q.value(0).toString();
-    }
-    return res;
-  };
-
-  QStringList topCats = getTop("categoria", "dim_producto", "id_producto");
-  QStringList topRegs = getTop("region", "dim_geografia", "id_geografia");
-
-  if (topCats.isEmpty() || topRegs.isEmpty()) {
-    // Fallback: consulta simple sin filtros si falla la heuristica
-    topCats.clear();
-    topRegs.clear();
-  }
-
-  // Paso 2: Construir query filtrada (o general si no hay filtro)
-  QString sql = R"(
-      SELECT 
-          p.categoria as dim_x, 
-          t.trimestre as dim_y, 
-          g.region as dim_z, 
-          SUM(f.total_venta) as valor
-      FROM fact_ventas f
-      JOIN dim_producto p ON f.id_producto = p.id_producto
-      JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo
-      JOIN dim_geografia g ON f.id_geografia = g.id_geografia
+  // 1. Deteccion Automatica de Tabla de Hechos (La mas grande)
+  QString sqlFact = R"(
+      SELECT relname FROM pg_class c 
+      JOIN pg_namespace n ON n.oid = c.relnamespace 
+      WHERE c.relkind = 'r' AND n.nspname = 'public' 
+      ORDER BY c.reltuples DESC LIMIT 1
   )";
-
-  QStringList wheres;
-  if (!topCats.isEmpty()) {
-    QString listStr = "'" + topCats.join("','") + "'";
-    wheres << QString("p.categoria IN (%1)").arg(listStr);
-  }
-  if (!topRegs.isEmpty()) {
-    QString listStr = "'" + topRegs.join("','") + "'";
-    wheres << QString("g.region IN (%1)").arg(listStr);
-  }
-
-  if (!wheres.isEmpty())
-    sql += " WHERE " + wheres.join(" AND ");
-
-  sql += " GROUP BY p.categoria, t.trimestre, g.region LIMIT 500";
-
-  // Ejecutar
-  QSqlQuery query(db);
-  if (!query.exec(sql)) {
-    qDebug() << "Error Cubo 3D:" << query.lastError().text();
+  QString factTable = execValue(db, sqlFact);
+  if (factTable.isEmpty())
     return;
+
+  // 2. Detectar Columnas Numericas (Medidas) en Fact
+  QString sqlMeasure = QString(R"(
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = '%1' AND table_schema = 'public'
+      AND data_type IN ('integer', 'numeric', 'real', 'double precision', 'bigint')
+      AND column_name NOT LIKE 'id_%' 
+      LIMIT 1
+  )")
+                           .arg(factTable);
+  QString measureCol = execValue(db, sqlMeasure);
+  if (measureCol.isEmpty())
+    measureCol = "count(*)";
+  else
+    measureCol = "SUM(" + measureCol + ")";
+
+  // 3. Detectar Dimensiones via FKs
+  struct DimensionInfo {
+    QString table;
+    QString fkCol;
+    QString pkCol;
+    QString labelCol;
+  };
+  QVector<DimensionInfo> dims;
+
+  QString sqlFKs = QString(R"(
+     SELECT
+       kcu.column_name as fk_col,
+       ccu.table_name as ref_table,
+       ccu.column_name as ref_pk
+     FROM information_schema.key_column_usage kcu
+     JOIN information_schema.constraint_column_usage ccu ON kcu.constraint_name = ccu.constraint_name
+     JOIN information_schema.table_constraints tc ON kcu.constraint_name = tc.constraint_name
+     WHERE tc.constraint_type = 'FOREIGN KEY' AND kcu.table_name = '%1'
+     LIMIT 3
+  )")
+                       .arg(factTable);
+
+  QSqlQuery qFK(db);
+  if (qFK.exec(sqlFKs)) {
+    while (qFK.next()) {
+      DimensionInfo d;
+      d.fkCol = qFK.value(0).toString();
+      d.table = qFK.value(1).toString();
+      d.pkCol = qFK.value(2).toString();
+
+      QString sqlLabel = QString(R"(
+              SELECT column_name FROM information_schema.columns 
+              WHERE table_name = '%1' 
+              AND data_type IN ('character varying', 'text', 'character')
+              AND column_name NOT LIKE 'id_%' AND column_name NOT LIKE 'codigo%'
+              LIMIT 1
+          )")
+                             .arg(d.table);
+      d.labelCol = execValue(db, sqlLabel);
+
+      if (d.labelCol.isEmpty())
+        d.labelCol = d.pkCol;
+      dims.append(d);
+    }
   }
 
-  // Mapear strings a indices
-  // Usamos los top lists generados para mantener orden consistente, o dinamico
-  // si faltan
-  QStringList xKeys = topCats;
-  QStringList zKeys = topRegs;
+  // Fallback si < 3 dimensiones
+  if (dims.size() < 3) {
+    QString sqlTextCols = QString(R"(
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_name = '%1' 
+          AND data_type IN ('character varying', 'text')
+          LIMIT %2
+      )")
+                              .arg(factTable)
+                              .arg(3 - dims.size());
+
+    QSqlQuery qTxt(db);
+    if (qTxt.exec(sqlTextCols)) {
+      while (qTxt.next()) {
+        DimensionInfo d;
+        d.table = factTable; // Self reference pseudo-dim
+        d.labelCol = qTxt.value(0).toString();
+        dims.append(d);
+      }
+    }
+  }
+
+  while (dims.size() < 3) {
+    DimensionInfo d;
+    d.table = "";
+    d.labelCol = "'N/A'";
+    dims.append(d);
+  }
+
+  // 4. Construir Consulta Dinamica
+  QString dimX = (dims[0].table == factTable) ? dims[0].labelCol
+                                              : ("d0." + dims[0].labelCol);
+  QString dimY = (dims[1].table == factTable) ? dims[1].labelCol
+                                              : ("d1." + dims[1].labelCol);
+  QString dimZ = (dims[2].table == factTable) ? dims[2].labelCol
+                                              : ("d2." + dims[2].labelCol);
+
+  QString querySql = "SELECT " + dimX + " as dx, " + dimY + " as dy, " + dimZ +
+                     " as dz, " + measureCol + " as val ";
+  querySql += " FROM " + factTable + " f ";
+
+  for (int i = 0; i < 3; i++) {
+    if (!dims[i].table.isEmpty() && dims[i].table != factTable) {
+      querySql += QString(" JOIN %1 d%2 ON f.%3 = d%2.%4 ")
+                      .arg(dims[i].table)
+                      .arg(i)
+                      .arg(dims[i].fkCol)
+                      .arg(dims[i].pkCol);
+    }
+  }
+
+  querySql += " GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 300";
+
+  QSqlQuery query(db);
+  if (!query.exec(querySql))
+    return;
 
   struct DatoRaw {
     QString x, y, z;
     double val;
   };
   QVector<DatoRaw> datos;
+  QStringList xKeys, yKeys, zKeys;
 
   m_valorMax = 0;
-  m_valorMin = 999999999;
+  m_valorMin = 9e15;
 
   while (query.next()) {
     DatoRaw d;
     d.x = query.value(0).toString();
-    d.y = query.value(1).toString(); // Trimestre int -> string
+    d.y = query.value(1).toString();
     d.z = query.value(2).toString();
     d.val = query.value(3).toDouble();
     datos.append(d);
 
-    // Auto-add keys if not present (por si el filtro fallo u obtuvimos
-    // fallback)
     if (!xKeys.contains(d.x))
       xKeys << d.x;
+    if (!yKeys.contains(d.y))
+      yKeys << d.y;
     if (!zKeys.contains(d.z))
       zKeys << d.z;
 
@@ -133,38 +203,33 @@ void VisorOlap::cargarCuboReal() {
       m_valorMin = d.val;
   }
 
-  // Ordenar para display
   if (xKeys.size() > 6)
     xKeys = xKeys.mid(0, 6);
+  if (yKeys.size() > 6)
+    yKeys = yKeys.mid(0, 6);
   if (zKeys.size() > 6)
     zKeys = zKeys.mid(0, 6);
 
   for (const auto &d : datos) {
     int ix = xKeys.indexOf(d.x);
+    int iy = yKeys.indexOf(d.y);
     int iz = zKeys.indexOf(d.z);
-    // Trimestre map
-    int iy = d.y.toInt() - 1;
-    if (iy < 0)
-      iy = 0;
-    if (iy > 3)
-      iy = 3;
 
-    if (ix >= 0 && iz >= 0) {
+    if (ix >= 0 && iy >= 0 && iz >= 0) {
       CeldaCubo celda;
       celda.dimX = ix;
       celda.dimY = iy;
       celda.dimZ = iz;
       celda.nombreDimX = d.x;
-      celda.nombreDimY = "Q" + d.y;
+      celda.nombreDimY = d.y;
       celda.nombreDimZ = d.z;
       celda.valor = d.val;
       celda.valorSecundario = 0;
       celda.etiqueta =
-          QString("%1\nQ%2 - %3\n$%4").arg(d.x, d.y, d.z).arg(d.val, 0, 'f', 0);
+          QString("%1\n%2\n%3\n%4").arg(d.x, d.y, d.z).arg(d.val, 0, 'f', 0);
       m_celdas.append(celda);
     }
   }
-
   update();
 }
 
@@ -276,11 +341,11 @@ void VisorOlap::dibujarEjes(QPainter &painter) {
 
   painter.setFont(QFont("Segoe UI", 9, QFont::Bold));
   painter.setPen(QColor("#2563eb"));
-  painter.drawText(ejeX + QPointF(5, 0), "Categoría");
+  painter.drawText(ejeX + QPointF(5, 0), "Eje X (Dim 1)");
   painter.setPen(QColor("#10b981"));
   painter.drawText(ejeY + QPointF(5, -5), "Valor");
   painter.setPen(QColor("#f59e0b"));
-  painter.drawText(ejeZ + QPointF(-30, 15), "Región");
+  painter.drawText(ejeZ + QPointF(-30, 15), "Eje Z (Dim 3)");
 }
 
 void VisorOlap::dibujarPrisma(QPainter &painter, const CeldaCubo &celda,
@@ -370,7 +435,7 @@ void VisorOlap::dibujarPrisma(QPainter &painter, const CeldaCubo &celda,
 
 void VisorOlap::dibujarTooltip(QPainter &painter, const CeldaCubo &celda,
                                const QPoint &pos) {
-  QString texto = QString("Prod: %1\nTrim: %2\nReg: %3\n\nValor: $%4")
+  QString texto = QString("X: %1\nY: %2\nZ: %3\n\nValor: %4")
                       .arg(celda.nombreDimX)
                       .arg(celda.nombreDimY)
                       .arg(celda.nombreDimZ)
