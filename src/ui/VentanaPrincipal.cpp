@@ -161,6 +161,13 @@ void VentanaPrincipal::alIrAReportes() {
   statusBar()->showMessage("Fase 5: Consultas", 0);
 
   ConstructorConsultas *constructor = new ConstructorConsultas(this);
+
+  // Conectar volver al inicio
+  connect(constructor, &ConstructorConsultas::volverAlInicio, this, [this]() {
+    statusBar()->showMessage("Volviendo al inicio...", 2000);
+    mostrarIntroduccion();
+  });
+
   contenedorCentral->addWidget(constructor);
   contenedorCentral->setCurrentWidget(constructor);
 }

@@ -42,6 +42,7 @@ private:
   void crearEfectoParticulas();
   void crearAnimacionEntrada();
   void ejecutarArchivoSQL(const QString &rutaArchivo);
+  bool validarFormulario();
 
   // Campos de conexion
   QLineEdit *inputHost;

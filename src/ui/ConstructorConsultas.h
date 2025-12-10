@@ -13,7 +13,7 @@
  * @brief Constructor visual de consultas OLAP (Fase 5)
  *
  * Permite crear consultas arrastrando dimensiones y medidas,
- * ejecutarlas, y exportar los resultados.
+ * ejecutarlas con validaciones, y exportar los resultados.
  */
 class ConstructorConsultas : public QWidget {
   Q_OBJECT
@@ -21,13 +21,20 @@ class ConstructorConsultas : public QWidget {
 public:
   explicit ConstructorConsultas(QWidget *parent = nullptr);
 
+signals:
+  /// Emitida cuando el usuario quiere volver al inicio
+  void volverAlInicio();
+
 private slots:
   void ejecutarConsulta();
   void generarReporte();
+  void limpiarConsulta();
+  void exportarCSV();
 
 private:
   void configurarUi();
   void cargarDatosEjemplo();
+  bool validarConsulta();
 
   // Listas de recursos
   QListWidget *listaDimensiones;
@@ -42,6 +49,8 @@ private:
   QPushButton *btnEjecutar;
   QPushButton *btnLimpiar;
   QPushButton *btnReporte;
+  QPushButton *btnExportCSV;
+  QPushButton *btnVolverInicio;
 
   // Resultados
   QTableWidget *tablaResultados;
