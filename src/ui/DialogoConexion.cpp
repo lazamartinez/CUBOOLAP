@@ -1,6 +1,7 @@
 #include "DialogoConexion.h"
 #include "../core/GestorBaseDatos.h"
 #include "Estilos.h"
+#include "ToastNotifier.h"
 #include <QCoreApplication>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -23,7 +24,7 @@ DialogoConexion::~DialogoConexion() {}
 
 void DialogoConexion::configurarUi() {
   setWindowTitle("Conexion - Cubo Vision");
-  setFixedSize(420, 520);
+  setFixedSize(420, 560);
   setModal(true);
 
   QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -56,14 +57,14 @@ void DialogoConexion::configurarUi() {
   formLayout->setLabelAlignment(Qt::AlignRight);
 
   QString inputStyle = R"(
-    QLineEdit, QSpinBox {
+    QLineEdit, QSpinBox, QComboBox {
       background: white;
       border: 1px solid #d1d5db;
       border-radius: 6px;
-      padding: 10px 12px;
+      padding: 8px 12px;
       font-size: 13px;
     }
-    QLineEdit:focus, QSpinBox:focus {
+    QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
       border: 2px solid #2563eb;
     }
   )";
@@ -99,12 +100,37 @@ void DialogoConexion::configurarUi() {
   lblPassword->setStyleSheet(labelStyle);
   formLayout->addRow(lblPassword, inputPassword);
 
-  inputBaseDatos = new QLineEdit("bd2025", this);
-  inputBaseDatos->setStyleSheet(inputStyle);
-  inputBaseDatos->setPlaceholderText("ej: bd2025");
+  // Base de datos - Layout Horizontal con Combo y Boton
+  QHBoxLayout *bdLayout = new QHBoxLayout();
+  comboBaseDatos = new QComboBox(this);
+  comboBaseDatos->setEditable(true);
+  comboBaseDatos->setPlaceholderText("bd2025");
+  comboBaseDatos->addItem("bd2025"); // Default
+  comboBaseDatos->setStyleSheet(inputStyle);
+  comboBaseDatos->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+  btnActualizarBD = new QPushButton("↻", this);
+  btnActualizarBD->setToolTip("Listar bases de datos disponibles");
+  btnActualizarBD->setFixedWidth(32);
+  btnActualizarBD->setStyleSheet(R"(
+    QPushButton {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      color: #3b82f6;
+      font-weight: bold;
+    }
+    QPushButton:hover { background: #e2e8f0; }
+  )");
+  connect(btnActualizarBD, &QPushButton::clicked, this,
+          &DialogoConexion::actualizarBasesDatos);
+
+  bdLayout->addWidget(comboBaseDatos);
+  bdLayout->addWidget(btnActualizarBD);
+
   QLabel *lblBase = new QLabel("Base:", this);
   lblBase->setStyleSheet(labelStyle);
-  formLayout->addRow(lblBase, inputBaseDatos);
+  formLayout->addRow(lblBase, bdLayout);
 
   mainLayout->addWidget(formWidget);
 
@@ -175,53 +201,59 @@ void DialogoConexion::configurarUi() {
   setStyleSheet("QDialog { background: white; }");
 }
 
+void DialogoConexion::actualizarBasesDatos() {
+  QString host = inputHost->text().trimmed();
+  int puerto = inputPuerto->value();
+  QString usuario = inputUsuario->text().trimmed();
+  QString password = inputPassword->text();
+
+  if (host.isEmpty() || usuario.isEmpty()) {
+    ToastNotifier::mostrar(this, "Ingrese Host y Usuario",
+                           ToastNotifier::Advertencia);
+    return;
+  }
+
+  btnActualizarBD->setEnabled(false);
+  lblEstado->setText("Listando bases de datos...");
+  QCoreApplication::processEvents();
+
+  QString errorMsg;
+  QStringList dbs = GestorBaseDatos::instancia().listarBasesDatos(
+      host, puerto, usuario, password, errorMsg);
+
+  if (errorMsg.isEmpty()) {
+    comboBaseDatos->clear();
+    comboBaseDatos->addItems(dbs);
+    ToastNotifier::mostrar(this, "Bases de datos actualizadas",
+                           ToastNotifier::Exito);
+    lblEstado->setText("Lista actualizada");
+  } else {
+    ToastNotifier::mostrar(this, "Error al listar bases: " + errorMsg,
+                           ToastNotifier::Error);
+    lblEstado->setText("Error de conexion");
+  }
+
+  btnActualizarBD->setEnabled(true);
+}
+
 bool DialogoConexion::validarFormulario() {
   QStringList errores;
 
-  // Validar host
-  QString host = inputHost->text().trimmed();
-  if (host.isEmpty()) {
-    errores << "El host es requerido";
-    inputHost->setStyleSheet(inputHost->styleSheet() +
-                             "border-color: #ef4444;");
-  } else {
-    // Validar formato de IP o hostname
-    QRegularExpression ipRegex("^(\\d{1,3}\\.){3}\\d{1,3}$");
-    QRegularExpression hostRegex("^[a-zA-Z][a-zA-Z0-9.-]*$");
-    if (!ipRegex.match(host).hasMatch() && !hostRegex.match(host).hasMatch()) {
-      errores << "Formato de host invalido";
-    }
-  }
+  if (inputHost->text().trimmed().isEmpty())
+    errores << "Host requerido";
+  if (inputUsuario->text().trimmed().isEmpty())
+    errores << "Usuario requerido";
 
-  // Validar puerto
-  int puerto = inputPuerto->value();
-  if (puerto < 1 || puerto > 65535) {
-    errores << "Puerto debe estar entre 1 y 65535";
-  }
-
-  // Validar usuario
-  QString usuario = inputUsuario->text().trimmed();
-  if (usuario.isEmpty()) {
-    errores << "El usuario es requerido";
-  } else if (usuario.length() < 2) {
-    errores << "Usuario debe tener al menos 2 caracteres";
-  }
-
-  // Validar base de datos
-  QString baseDatos = inputBaseDatos->text().trimmed();
-  if (baseDatos.isEmpty()) {
-    errores << "La base de datos es requerida";
-  } else if (baseDatos.contains(" ")) {
-    errores << "Nombre de base de datos no puede contener espacios";
-  }
+  QString baseDatos = comboBaseDatos->currentText().trimmed();
+  if (baseDatos.isEmpty())
+    errores << "Base de datos requerida";
+  else if (baseDatos.contains(" "))
+    errores << "Nombre BD sin espacios";
 
   if (!errores.isEmpty()) {
     lblEstado->setText("Errores de validacion");
     lblEstado->setStyleSheet("color: #ef4444; font-size: 11px;");
-
-    QMessageBox::warning(this, "Validacion",
-                         "Por favor corrija los siguientes errores:\n\n- " +
-                             errores.join("\n- "));
+    ToastNotifier::mostrar(this, errores.first(), ToastNotifier::Advertencia);
     return false;
   }
 
@@ -229,10 +261,8 @@ bool DialogoConexion::validarFormulario() {
 }
 
 void DialogoConexion::intentarConexion() {
-  // Validar formulario primero
-  if (!validarFormulario()) {
+  if (!validarFormulario())
     return;
-  }
 
   lblEstado->setText("Conectando...");
   lblEstado->setStyleSheet("color: #f59e0b; font-size: 11px;");
@@ -243,7 +273,7 @@ void DialogoConexion::intentarConexion() {
   int puerto = inputPuerto->value();
   QString usuario = inputUsuario->text().trimmed();
   QString password = inputPassword->text();
-  QString baseDatos = inputBaseDatos->text().trimmed();
+  QString baseDatos = comboBaseDatos->currentText().trimmed();
   QString errorMsg;
 
   if (GestorBaseDatos::instancia().conectar(host, puerto, usuario, password,
@@ -253,9 +283,7 @@ void DialogoConexion::intentarConexion() {
         "color: #10b981; font-size: 11px; font-weight: 600;");
 
     if (!m_archivoSemilla.isEmpty()) {
-      lblEstado->setText("Ejecutando semilla SQL...");
       ejecutarArchivoSQL(m_archivoSemilla);
-      lblEstado->setText("Conectado y semilla ejecutada");
     }
 
     QTimer::singleShot(500, this, [this]() {
@@ -265,34 +293,21 @@ void DialogoConexion::intentarConexion() {
   } else {
     lblEstado->setText("Error de conexion");
     lblEstado->setStyleSheet("color: #ef4444; font-size: 11px;");
-
-    QMessageBox::critical(
-        this, "Error de Conexion",
-        "No se pudo conectar a la base de datos:\n\n" + errorMsg +
-            "\n\nVerifique:\n- Que PostgreSQL este ejecutandose\n- Los datos "
-            "de conexion sean correctos\n- El firewall permita la conexion");
+    ToastNotifier::mostrar(this, "Error: " + errorMsg, ToastNotifier::Error);
     btnConectar->setEnabled(true);
   }
 }
 
-void DialogoConexion::seleccionarArchivoSQL() {
-  QString archivo = QFileDialog::getOpenFileName(
-      this, "Seleccionar SQL", "",
-      "Archivos SQL (*.sql);;Todos los archivos (*)");
-
-  if (!archivo.isEmpty()) {
-    m_archivoSemilla = archivo;
-    QFileInfo info(archivo);
-    lblDropZone->setText(info.fileName());
-    lblDropZone->setStyleSheet(
-        "color: #10b981; font-size: 11px; font-weight: 500;");
-  }
-}
-
 void DialogoConexion::ejecutarArchivoSQL(const QString &rutaArchivo) {
+  lblEstado->setText("Ejecutando semilla SQL...");
+  ToastNotifier::mostrar(this, "Iniciando carga de SQL...",
+                         ToastNotifier::Info);
+  QCoreApplication::processEvents();
+
   QFile archivo(rutaArchivo);
   if (!archivo.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    QMessageBox::warning(this, "Error", "No se pudo abrir el archivo SQL.");
+    ToastNotifier::mostrar(this, "No se pudo leer archivo SQL",
+                           ToastNotifier::Error);
     return;
   }
 
@@ -302,78 +317,80 @@ void DialogoConexion::ejecutarArchivoSQL(const QString &rutaArchivo) {
   QSqlQuery query(GestorBaseDatos::instancia().baseDatos());
   QStringList sentencias = contenidoSQL.split(";", Qt::SkipEmptyParts);
 
-  int ejecutadas = 0;
+  int total = 0;
   int errores = 0;
 
+  // Contar sentencias reales (ignorando comentarios puros si los split deja
+  // algo)
+  int totalReal = 0;
+  for (const QString &s : sentencias) {
+    if (!s.trimmed().isEmpty())
+      totalReal++;
+  }
+
+  int progreso = 0;
   for (const QString &sentencia : sentencias) {
     QString sql = sentencia.trimmed();
     if (!sql.isEmpty() && !sql.startsWith("--")) {
-      if (query.exec(sql)) {
-        ejecutadas++;
-      } else {
+      total++;
+      if (!query.exec(sql)) {
         errores++;
+        qDebug() << "Error SQL:" << query.lastError().text() << " en "
+                 << sql.left(50);
+      }
+      progreso++;
+      if (progreso % 10 == 0) {
+        lblEstado->setText(
+            QString("Ejecutando SQL (%1/%2)...").arg(progreso).arg(totalReal));
+        QCoreApplication::processEvents();
       }
     }
   }
 
-  if (errores > 0) {
-    QMessageBox::warning(
-        this, "Semilla SQL",
-        QString(
-            "Semilla ejecutada con advertencias:\n%1 sentencias OK, %2 errores")
-            .arg(ejecutadas)
-            .arg(errores));
+  if (errores == 0) {
+    ToastNotifier::mostrar(
+        this, QString("Semilla cargada: %1 sentencias OK").arg(total),
+        ToastNotifier::Exito);
+    lblEstado->setText("Semilla cargada exitosamente");
+  } else {
+    ToastNotifier::mostrar(
+        this,
+        QString("Carga con errores: %1/%2 fallos").arg(errores).arg(total),
+        ToastNotifier::Advertencia);
+    lblEstado->setText("Semilla cargada con advertencias");
   }
 }
+
+// ... dragged event methods remain largely the same, included below for
+// completeness of replacement
+void DialogoConexion::seleccionarArchivoSQL() { /* Unused directly now */ }
+void DialogoConexion::crearAnimacionEntrada() {}
+void DialogoConexion::crearEfectoParticulas() {}
 
 void DialogoConexion::dragEnterEvent(QDragEnterEvent *event) {
-  if (event->mimeData()->hasUrls()) {
-    const QList<QUrl> urls = event->mimeData()->urls();
-    if (!urls.isEmpty() && urls.first().toLocalFile().endsWith(".sql")) {
-      event->acceptProposedAction();
-      dropZone->setStyleSheet(R"(
-        QFrame {
-          background: #eff6ff;
-          border: 2px dashed #2563eb;
-          border-radius: 8px;
-        }
-      )");
-    }
+  if (event->mimeData()->hasUrls() &&
+      event->mimeData()->urls().first().toLocalFile().endsWith(".sql")) {
+    event->acceptProposedAction();
+    dropZone->setStyleSheet("QFrame { background: #eff6ff; border: 2px dashed "
+                            "#2563eb; border-radius: 8px; }");
   }
 }
-
 void DialogoConexion::dragLeaveEvent(QDragLeaveEvent *event) {
   Q_UNUSED(event);
-  dropZone->setStyleSheet(R"(
-    QFrame {
-      background: #f8fafc;
-      border: 2px dashed #cbd5e1;
-      border-radius: 8px;
-    }
-  )");
+  dropZone->setStyleSheet("QFrame { background: #f8fafc; border: 2px dashed "
+                          "#cbd5e1; border-radius: 8px; }");
 }
-
 void DialogoConexion::dropEvent(QDropEvent *event) {
   const QMimeData *mimeData = event->mimeData();
   if (mimeData->hasUrls()) {
     QString archivo = mimeData->urls().first().toLocalFile();
     if (archivo.endsWith(".sql")) {
       m_archivoSemilla = archivo;
-      QFileInfo info(archivo);
-      lblDropZone->setText(info.fileName());
-      lblDropZone->setStyleSheet(
-          "color: #10b981; font-size: 11px; font-weight: 500;");
+      lblDropZone->setText("Archivo listo: " + QFileInfo(archivo).fileName());
+      lblDropZone->setStyleSheet("color: #10b981; font-weight: bold;");
       event->acceptProposedAction();
     }
   }
-  dropZone->setStyleSheet(R"(
-    QFrame {
-      background: #f8fafc;
-      border: 2px dashed #cbd5e1;
-      border-radius: 8px;
-    }
-  )");
+  dropZone->setStyleSheet("QFrame { background: #f8fafc; border: 2px dashed "
+                          "#cbd5e1; border-radius: 8px; }");
 }
-
-void DialogoConexion::crearAnimacionEntrada() {}
-void DialogoConexion::crearEfectoParticulas() {}

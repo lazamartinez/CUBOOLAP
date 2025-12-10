@@ -19,6 +19,9 @@ public:
   bool conectar(const QString &host, int puerto, const QString &usuario,
                 const QString &password, const QString &baseDatos,
                 QString &errorMsg);
+  QStringList listarBasesDatos(const QString &host, int puerto,
+                               const QString &usuario, const QString &password,
+                               QString &errorMsg);
   bool estaConectado() const;
   QSqlDatabase baseDatos() const;
 

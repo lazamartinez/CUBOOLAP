@@ -1,5 +1,6 @@
 #include "GestorBaseDatos.h"
 #include <QDebug>
+#include <QSqlQuery>
 
 GestorBaseDatos &GestorBaseDatos::instancia() {
   static GestorBaseDatos instancia;
@@ -37,6 +38,42 @@ bool GestorBaseDatos::conectar(const QString &host, int puerto,
     qCritical() << "Error de conexión:" << errorMsg;
     return false;
   }
+}
+
+QStringList GestorBaseDatos::listarBasesDatos(const QString &host, int puerto,
+                                              const QString &usuario,
+                                              const QString &password,
+                                              QString &errorMsg) {
+  QStringList basesDeDatos;
+
+  // Conectar a "postgres" para listar otras bases
+  QString connectionName = "TempListConnection";
+  {
+    QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL", connectionName);
+    db.setHostName(host);
+    db.setPort(puerto);
+    db.setUserName(usuario);
+    db.setPassword(password);
+    db.setDatabaseName("postgres");
+
+    if (db.open()) {
+      QSqlQuery query(db);
+      if (query.exec("SELECT datname FROM pg_database WHERE datistemplate = "
+                     "false AND datname != 'postgres';")) {
+        while (query.next()) {
+          basesDeDatos << query.value(0).toString();
+        }
+      } else {
+        errorMsg = query.lastError().text();
+      }
+      db.close();
+    } else {
+      errorMsg = db.lastError().text();
+    }
+  }
+  QSqlDatabase::removeDatabase(connectionName);
+
+  return basesDeDatos;
 }
 
 bool GestorBaseDatos::estaConectado() const { return m_db.isOpen(); }

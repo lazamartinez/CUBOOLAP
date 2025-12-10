@@ -1,10 +1,8 @@
 #ifndef DIALOGOCONEXION_H
 #define DIALOGOCONEXION_H
 
+#include <QComboBox>
 #include <QDialog>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-#include <QFileInfo>
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
@@ -12,12 +10,7 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
-/**
- * @brief Dialogo de conexion a base de datos PostgreSQL
- *
- * Permite configurar la conexion y opcionalmente importar
- * archivos SQL de semilla mediante drag-drop o seleccion.
- */
+
 class DialogoConexion : public QDialog {
   Q_OBJECT
 
@@ -33,27 +26,28 @@ protected:
   void dragLeaveEvent(QDragLeaveEvent *event) override;
   void dropEvent(QDropEvent *event) override;
 
-private slots:
-  void intentarConexion();
-  void seleccionarArchivoSQL();
-
 private:
   void configurarUi();
+  void intentarConexion();
+  void seleccionarArchivoSQL();
   void crearEfectoParticulas();
   void crearAnimacionEntrada();
   void ejecutarArchivoSQL(const QString &rutaArchivo);
   bool validarFormulario();
+  void actualizarBasesDatos();
 
   // Campos de conexion
   QLineEdit *inputHost;
   QSpinBox *inputPuerto;
   QLineEdit *inputUsuario;
   QLineEdit *inputPassword;
-  QLineEdit *inputBaseDatos;
+  QComboBox *comboBaseDatos;
+  QPushButton *btnActualizarBD;
+
   QPushButton *btnConectar;
   QLabel *lblEstado;
 
-  // Zona de drag-drop
+  // Zona Drop
   QFrame *dropZone;
   QLabel *lblDropZone;
   QString m_archivoSemilla;
