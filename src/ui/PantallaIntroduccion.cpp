@@ -1,8 +1,15 @@
 #include "PantallaIntroduccion.h"
+#include <QApplication>
+#include <QDir>
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPixmap>
+#include <QPushButton>
 #include <QVBoxLayout>
+
 
 PantallaIntroduccion::PantallaIntroduccion(QWidget *parent) : QWidget(parent) {
   configurarUi();
@@ -10,216 +17,157 @@ PantallaIntroduccion::PantallaIntroduccion(QWidget *parent) : QWidget(parent) {
 
 void PantallaIntroduccion::paintEvent(QPaintEvent *event) {
   Q_UNUSED(event);
-  QPainter painter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
+  QPainter p(this);
+  p.setRenderHint(QPainter::Antialiasing);
 
-  // Fondo blanco con gradiente sutil
-  QLinearGradient grad(0, 0, width(), height());
-  grad.setColorAt(0, QColor("#ffffff"));
-  grad.setColorAt(0.5, QColor("#f8fafc"));
-  grad.setColorAt(1, QColor("#f1f5f9"));
-  painter.fillRect(rect(), grad);
+  // Fondo blanco limpio
+  p.fillRect(rect(), Qt::white);
 
-  // Decoracion superior - onda azul suave
-  QPainterPath wave;
-  wave.moveTo(0, 0);
-  wave.lineTo(width(), 0);
-  wave.lineTo(width(), 80);
-  wave.quadTo(width() * 0.75, 100, width() * 0.5, 85);
-  wave.quadTo(width() * 0.25, 70, 0, 90);
-  wave.closeSubpath();
+  // Onda decorativa azul-violeta en la parte inferior
+  QPainterPath path;
+  path.moveTo(0, height());
+  path.lineTo(0, height() * 0.75);
+  path.cubicTo(width() * 0.25, height() * 0.65, width() * 0.75, height() * 0.85,
+               width(), height() * 0.75);
+  path.lineTo(width(), height());
+  path.closeSubpath();
 
-  QLinearGradient waveGrad(0, 0, width(), 0);
-  waveGrad.setColorAt(0, QColor("#2563eb"));
-  waveGrad.setColorAt(1, QColor("#6366f1"));
-  painter.fillPath(wave, waveGrad);
+  QLinearGradient grad(0, height() * 0.6, width(), height());
+  grad.setColorAt(0, QColor(99, 102, 241, 100)); // Indigo suave
+  grad.setColorAt(1, QColor(168, 85, 247, 100)); // Violeta suave
+  p.fillPath(path, grad);
 }
 
 void PantallaIntroduccion::configurarUi() {
-  QVBoxLayout *mainLayout = new QVBoxLayout(this);
-  mainLayout->setSpacing(0);
-  mainLayout->setContentsMargins(0, 0, 0, 0);
-
-  // Espaciador para la onda decorativa
-  mainLayout->addSpacing(100);
-
-  // Contenido centrado
-  QWidget *content = new QWidget(this);
-  QVBoxLayout *contentLayout = new QVBoxLayout(content);
-  contentLayout->setAlignment(Qt::AlignCenter);
-  contentLayout->setSpacing(24);
-  contentLayout->setContentsMargins(40, 20, 40, 40);
-
-  // Logo/Titulo
-  QLabel *lblLogo = new QLabel("CUBO VISION", content);
-  lblLogo->setStyleSheet(R"(
-    font-size: 36px;
-    font-weight: 800;
-    color: #1e3a8a;
-    letter-spacing: 4px;
-  )");
-  lblLogo->setAlignment(Qt::AlignCenter);
-  contentLayout->addWidget(lblLogo);
-
-  QLabel *lblSubtitulo =
-      new QLabel("Sistema de Analisis OLAP Multidimensional", content);
-  lblSubtitulo->setStyleSheet("font-size: 14px; color: #64748b;");
-  lblSubtitulo->setAlignment(Qt::AlignCenter);
-  contentLayout->addWidget(lblSubtitulo);
-
-  contentLayout->addSpacing(20);
-
-  // Descripcion breve
-  QLabel *lblDesc =
-      new QLabel("Transforme sus datos en decisiones inteligentes.\n"
-                 "Analice, modele y visualice cubos OLAP de forma intuitiva.",
-                 content);
-  lblDesc->setStyleSheet("font-size: 13px; color: #475569; line-height: 1.6;");
-  lblDesc->setAlignment(Qt::AlignCenter);
-  lblDesc->setWordWrap(true);
-  contentLayout->addWidget(lblDesc);
-
-  contentLayout->addSpacing(24);
-
-  // Fases en fila horizontal
-  QHBoxLayout *fasesLayout = new QHBoxLayout();
-  fasesLayout->setSpacing(16);
-  fasesLayout->setAlignment(Qt::AlignCenter);
-
-  fasesLayout->addWidget(crearTarjetaFase(
-      1, "Diagnostico", "Analisis automatico\ndel esquema", "1", "#2563eb"));
-
-  // Flecha
-  QLabel *arrow1 = new QLabel(">", content);
-  arrow1->setStyleSheet("font-size: 24px; color: #cbd5e1;");
-  fasesLayout->addWidget(arrow1);
-
-  fasesLayout->addWidget(crearTarjetaFase(
-      2, "Modelado", "Definir dimensiones\ny medidas", "2", "#6366f1"));
-
-  QLabel *arrow2 = new QLabel(">", content);
-  arrow2->setStyleSheet("font-size: 24px; color: #cbd5e1;");
-  fasesLayout->addWidget(arrow2);
-
-  fasesLayout->addWidget(crearTarjetaFase(
-      3, "Carga", "Procesamiento\noptimizado", "3", "#10b981"));
-
-  QLabel *arrow3 = new QLabel(">", content);
-  arrow3->setStyleSheet("font-size: 24px; color: #cbd5e1;");
-  fasesLayout->addWidget(arrow3);
-
-  fasesLayout->addWidget(crearTarjetaFase(
-      4, "Explorar", "Visualizacion\n3D interactiva", "4", "#f59e0b"));
-
-  QLabel *arrow4 = new QLabel(">", content);
-  arrow4->setStyleSheet("font-size: 24px; color: #cbd5e1;");
-  fasesLayout->addWidget(arrow4);
-
-  fasesLayout->addWidget(crearTarjetaFase(
-      5, "Reportes", "Consultas y\nexportacion", "5", "#ef4444"));
-
-  contentLayout->addLayout(fasesLayout);
-
-  contentLayout->addSpacing(32);
-
-  // Boton de inicio
-  QPushButton *btnIniciar = new QPushButton("Comenzar Ahora", content);
-  btnIniciar->setMinimumSize(200, 48);
-  btnIniciar->setCursor(Qt::PointingHandCursor);
-  btnIniciar->setStyleSheet(R"(
-    QPushButton {
-      background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #2563eb, stop:1 #6366f1);
-      border: none;
-      border-radius: 24px;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 12px 32px;
-    }
-    QPushButton:hover {
-      background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #1d4ed8, stop:1 #4f46e5);
-    }
-  )");
-  connect(btnIniciar, &QPushButton::clicked, this,
-          &PantallaIntroduccion::iniciarSistema);
-
-  QHBoxLayout *btnLayout = new QHBoxLayout();
-  btnLayout->setAlignment(Qt::AlignCenter);
-  btnLayout->addWidget(btnIniciar);
-  contentLayout->addLayout(btnLayout);
-
-  contentLayout->addStretch();
-
-  // Footer
-  QLabel *lblFooter = new QLabel("Version 1.0 | PostgreSQL + Qt6", content);
-  lblFooter->setStyleSheet("font-size: 11px; color: #94a3b8;");
-  lblFooter->setAlignment(Qt::AlignCenter);
-  contentLayout->addWidget(lblFooter);
-
-  mainLayout->addWidget(content);
-}
-
-QWidget *PantallaIntroduccion::crearTarjetaFase(int numero,
-                                                const QString &titulo,
-                                                const QString &descripcion,
-                                                const QString &icono,
-                                                const QString &color) {
-  QWidget *card = new QWidget(this);
-  card->setFixedSize(120, 130);
-  card->setStyleSheet(QString(R"(
-    QWidget {
-      background: white;
-      border: 2px solid %1;
-      border-radius: 12px;
-    }
-    QWidget:hover {
-      background: %1;
-    }
-  )")
-                          .arg(color));
-
-  QVBoxLayout *layout = new QVBoxLayout(card);
+  QVBoxLayout *layout = new QVBoxLayout(this);
+  layout->setSpacing(30);
   layout->setAlignment(Qt::AlignCenter);
-  layout->setSpacing(6);
-  layout->setContentsMargins(8, 12, 8, 12);
 
-  // Numero/Icono
-  QLabel *lblNum = new QLabel(icono, card);
-  lblNum->setStyleSheet(QString(R"(
-    font-size: 28px;
-    font-weight: 800;
-    color: %1;
-    background: transparent;
-    border: none;
-  )")
-                            .arg(color));
-  lblNum->setAlignment(Qt::AlignCenter);
-  layout->addWidget(lblNum);
+  // --- LOGO / CUBO 3D ---
+  QLabel *lblLogo = new QLabel(this);
+  QString logoPath = QDir::currentPath() + "/src/ui/assets/logo.png";
+  QPixmap logo(logoPath);
+
+  if (!logo.isNull()) {
+    lblLogo->setPixmap(
+        logo.scaled(150, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  } else {
+    // Fallback si no hay imagen: Dibujar un cubo simple con texto
+    lblLogo->setText("⬢"); // Hexagon/Cube UTF-8 char as placeholder
+    lblLogo->setStyleSheet("font-size: 100px; color: #6366f1;");
+  }
+  lblLogo->setAlignment(Qt::AlignCenter);
+  layout->addWidget(lblLogo);
 
   // Titulo
-  QLabel *lblTitulo = new QLabel(titulo, card);
-  lblTitulo->setStyleSheet(R"(
-    font-size: 12px;
-    font-weight: 700;
-    color: #1e293b;
-    background: transparent;
-    border: none;
-  )");
+  QLabel *lblTitulo = new QLabel("CUBO VISION", this);
+  lblTitulo->setStyleSheet("font-size: 48px; font-weight: 900; color: #1e293b; "
+                           "letter-spacing: 2px;");
   lblTitulo->setAlignment(Qt::AlignCenter);
   layout->addWidget(lblTitulo);
 
-  // Descripcion
-  QLabel *lblDesc = new QLabel(descripcion, card);
-  lblDesc->setStyleSheet(R"(
-    font-size: 10px;
-    color: #64748b;
-    background: transparent;
-    border: none;
-  )");
-  lblDesc->setAlignment(Qt::AlignCenter);
-  layout->addWidget(lblDesc);
+  // Subtitulo
+  QLabel *lblSub =
+      new QLabel("Sistema de Analisis Multidimensional Inteligente", this);
+  lblSub->setStyleSheet(
+      "font-size: 18px; color: #64748b; margin-bottom: 20px;");
+  lblSub->setAlignment(Qt::AlignCenter);
+  layout->addWidget(lblSub);
 
-  return card;
+  // Fases (Cards)
+  QHBoxLayout *fasesLayout = new QHBoxLayout();
+  fasesLayout->setSpacing(20);
+  fasesLayout->setAlignment(Qt::AlignCenter);
+
+  auto crearCard = [](const QString &titulo, const QString &icono) {
+    QFrame *card = new QFrame();
+    card->setFixedSize(140, 160);
+    card->setStyleSheet(R"(
+            QFrame {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+            }
+            QFrame:hover {
+                border: 2px solid #6366f1;
+                background: #f8fafc;
+            }
+        )");
+
+    QVBoxLayout *vbox = new QVBoxLayout(card);
+    QLabel *lblIcon = new QLabel(icono);
+    lblIcon->setStyleSheet("font-size: 32px;");
+    lblIcon->setAlignment(Qt::AlignCenter);
+
+    QLabel *lblText = new QLabel(titulo);
+    lblText->setStyleSheet(
+        "font-size: 13px; font-weight: 600; color: #475569;");
+    lblText->setAlignment(Qt::AlignCenter);
+    lblText->setWordWrap(true);
+
+    vbox->addWidget(lblIcon);
+    vbox->addWidget(lblText);
+
+    // Sombra
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect();
+    shadow->setBlurRadius(15);
+    shadow->setColor(QColor(0, 0, 0, 20));
+    shadow->setOffset(0, 4);
+    card->setGraphicsEffect(shadow);
+
+    return card;
+  };
+
+  fasesLayout->addWidget(crearCard("1. Diagnostico", "🔍"));
+  fasesLayout->addWidget(new QLabel("→"));
+  fasesLayout->addWidget(crearCard("2. Modelado", "📐"));
+  fasesLayout->addWidget(new QLabel("→"));
+  fasesLayout->addWidget(crearCard("3. Carga", "⚡"));
+  fasesLayout->addWidget(new QLabel("→"));
+  fasesLayout->addWidget(crearCard("4. Explorar", "🧊"));
+  fasesLayout->addWidget(new QLabel("→"));
+  fasesLayout->addWidget(crearCard("5. Reportes", "📊"));
+
+  layout->addLayout(fasesLayout);
+
+  layout->addSpacing(40);
+
+  // Boton Comenzar
+  QPushButton *btnInicio = new QPushButton("Comenzar Ahora", this);
+  btnInicio->setCursor(Qt::PointingHandCursor);
+  btnInicio->setFixedSize(220, 60);
+  btnInicio->setStyleSheet(R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4f46e5, stop:1 #7c3aed);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            border: none;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4338ca, stop:1 #6d28d9);
+            margin-top: -2px;
+        }
+        QPushButton:pressed {
+            margin-top: 2px;
+        }
+    )");
+
+  // Sombra boton
+  QGraphicsDropShadowEffect *btnShadow = new QGraphicsDropShadowEffect();
+  btnShadow->setBlurRadius(20);
+  btnShadow->setColor(QColor(79, 70, 229, 80));
+  btnShadow->setOffset(0, 8);
+  btnInicio->setGraphicsEffect(btnShadow);
+
+  connect(btnInicio, &QPushButton::clicked, this,
+          &PantallaIntroduccion::iniciarSistema);
+  layout->addWidget(btnInicio);
+
+  layout->addStretch();
+
+  QLabel *lblVersion = new QLabel("v1.0.0 - Build 2025", this);
+  lblVersion->setStyleSheet("color: #94a3b8; font-size: 11px;");
+  layout->addWidget(lblVersion);
 }
