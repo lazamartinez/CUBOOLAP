@@ -112,12 +112,34 @@ public:
   ConfigVisualizacion obtenerConfig() const { return m_config; }
   void aplicarConfig(const ConfigVisualizacion &config);
 
+public slots:
+  // ========== OPERACIONES OLAP ==========
+  void ejecutarDrillDown(); // Navegar a nivel mas detallado
+  void ejecutarRollUp();    // Volver a nivel mas general
+  void ejecutarSlice(const QString &dimension, const QStringList &valores);
+  void ejecutarDice(const QMap<QString, QStringList> &filtros);
+  void ejecutarPivot(); // Rotar ejes X/Z
+  void ejecutarRanking(int topN, bool descendente);
+  void ejecutarDrillThrough(); // Ver registros individuales
+  void resetearVista();        // Volver a vista inicial
+
+  // Getters para operaciones
+  QStringList obtenerDimensionesDisponibles() const;
+  QStringList obtenerValoresDimension(const QString &dimension);
+  QString obtenerNivelActual() const;
+  QStringList obtenerFiltrosActivos() const;
+
 signals:
   void celdaSeleccionada(const QString &info);
   void seleccionCambiada(int cantidad);
   void estadisticasActualizadas(int cantidad, double suma);
-  void drillDown(int x, int y, int z);
+  void drillDownActivado(int x, int y, int z);
+  void nivelCambiado(const QString &nuevoNivel);
+  void filtrosActualizados(const QStringList &filtros);
+  void datosActualizados();
   void metadataCambiada(const MetadataCubo &metadata);
+  void solicitarDrillThrough(const QString &dimX, const QString &dimZ,
+                             double valor);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -211,6 +233,25 @@ private:
 
   // Enums para tipos de ejes
   enum TipoEje { EjeX = 0, EjeY = 1, EjeZ = 2 };
+
+  // ========== ESTADO OLAP ==========
+  struct NivelJerarquia {
+    QString dimension;
+    QString columna;
+    QString valor;
+  };
+
+  QVector<NivelJerarquia> m_historialNavegacion; // Breadcrumb de drill-downs
+  QMap<QString, QStringList> m_filtrosActivos;   // Filtros Slice/Dice
+  int m_topN = 0;                                // 0 = sin limite
+  bool m_rankingDesc = true;                     // Orden descendente
+
+  // Jerarquias por dimension
+  QMap<QString, QStringList> m_jerarquias;
+
+  // Estado original para reset
+  MetadataCubo m_metadataOriginal;
+  QMap<QString, QStringList> m_valoresOriginales;
 };
 
 #endif // VISOROLAP_H

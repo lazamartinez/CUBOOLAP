@@ -1307,7 +1307,8 @@ void VisorOlap::mouseReleaseEvent(QMouseEvent *event) {
 void VisorOlap::mouseDoubleClickEvent(QMouseEvent *event) {
   int idx = detectarCeldaEnPunto(event->pos());
   if (idx >= 0) {
-    emit drillDown(m_celdas[idx].dimX, m_celdas[idx].dimY, m_celdas[idx].dimZ);
+    emit drillDownActivado(m_celdas[idx].dimX, m_celdas[idx].dimY,
+                           m_celdas[idx].dimZ);
   }
 }
 
@@ -1340,4 +1341,214 @@ void VisorOlap::keyPressEvent(QKeyEvent *e) {
 void VisorOlap::resizeEvent(QResizeEvent *event) {
   Q_UNUSED(event);
   update();
+}
+
+// ============================================================================
+// OPERACIONES OLAP
+// ============================================================================
+
+void VisorOlap::ejecutarDrillDown() {
+  // Verificar si hay celda seleccionada
+  int idxSeleccionado = -1;
+  for (int i = 0; i < m_celdas.size(); i++) {
+    if (m_celdas[i].seleccionada) {
+      idxSeleccionado = i;
+      break;
+    }
+  }
+
+  if (idxSeleccionado < 0) {
+    qDebug() << "DRILL DOWN: No hay celda seleccionada";
+    return;
+  }
+
+  const CeldaCubo &celda = m_celdas[idxSeleccionado];
+
+  // Agregar nivel actual al historial
+  NivelJerarquia nivel;
+  nivel.dimension = m_metadata.dimensionX.nombre;
+  nivel.columna = m_metadata.dimensionX.columna;
+  nivel.valor = celda.nombreDimX;
+  m_historialNavegacion.append(nivel);
+
+  // Agregar filtro por el valor seleccionado
+  m_filtrosActivos[m_metadata.dimensionX.nombre] = {celda.nombreDimX};
+
+  qDebug() << "DRILL DOWN: Filtrando por" << nivel.dimension << "="
+           << nivel.valor;
+
+  // Recargar con filtros
+  recargarCubo();
+
+  emit nivelCambiado(obtenerNivelActual());
+  emit filtrosActualizados(obtenerFiltrosActivos());
+  emit drillDownActivado(celda.dimX, celda.dimY, celda.dimZ);
+}
+
+void VisorOlap::ejecutarRollUp() {
+  if (m_historialNavegacion.isEmpty()) {
+    qDebug() << "ROLL UP: Ya estamos en el nivel mas alto";
+    return;
+  }
+
+  // Quitar el ultimo nivel del historial
+  NivelJerarquia ultimo = m_historialNavegacion.takeLast();
+
+  // Quitar el filtro correspondiente
+  m_filtrosActivos.remove(ultimo.dimension);
+
+  qDebug() << "ROLL UP: Quitando filtro de" << ultimo.dimension;
+
+  // Recargar sin el filtro
+  recargarCubo();
+
+  emit nivelCambiado(obtenerNivelActual());
+  emit filtrosActualizados(obtenerFiltrosActivos());
+}
+
+void VisorOlap::ejecutarSlice(const QString &dimension,
+                              const QStringList &valores) {
+  if (valores.isEmpty()) {
+    m_filtrosActivos.remove(dimension);
+    qDebug() << "SLICE: Removido filtro de" << dimension;
+  } else {
+    m_filtrosActivos[dimension] = valores;
+    qDebug() << "SLICE:" << dimension << "=" << valores.join(", ");
+  }
+
+  recargarCubo();
+  emit filtrosActualizados(obtenerFiltrosActivos());
+}
+
+void VisorOlap::ejecutarDice(const QMap<QString, QStringList> &filtros) {
+  m_filtrosActivos = filtros;
+  qDebug() << "DICE: Aplicando" << filtros.size() << "filtros";
+
+  for (auto it = filtros.begin(); it != filtros.end(); ++it) {
+    qDebug() << "  -" << it.key() << ":" << it.value().join(", ");
+  }
+
+  recargarCubo();
+  emit filtrosActualizados(obtenerFiltrosActivos());
+}
+
+void VisorOlap::ejecutarPivot() {
+  // Intercambiar dimensiones X y Z
+  DimensionInfo temp = m_metadata.dimensionX;
+  m_metadata.dimensionX = m_metadata.dimensionZ;
+  m_metadata.dimensionZ = temp;
+
+  qDebug() << "PIVOT: X=" << m_metadata.dimensionX.nombre
+           << "Z=" << m_metadata.dimensionZ.nombre;
+
+  recargarCubo();
+  emit metadataCambiada(m_metadata);
+}
+
+void VisorOlap::ejecutarRanking(int topN, bool descendente) {
+  m_topN = topN;
+  m_rankingDesc = descendente;
+
+  qDebug() << "RANKING: Top" << topN << (descendente ? "DESC" : "ASC");
+
+  recargarCubo();
+}
+
+void VisorOlap::ejecutarDrillThrough() {
+  // Buscar celda seleccionada
+  for (const CeldaCubo &celda : m_celdas) {
+    if (celda.seleccionada) {
+      qDebug() << "DRILL THROUGH: Celda" << celda.nombreDimX << "x"
+               << celda.nombreDimZ;
+      emit solicitarDrillThrough(celda.nombreDimX, celda.nombreDimZ,
+                                 celda.valor);
+      return;
+    }
+  }
+
+  qDebug() << "DRILL THROUGH: No hay celda seleccionada";
+}
+
+void VisorOlap::resetearVista() {
+  // Limpiar todo el estado OLAP
+  m_historialNavegacion.clear();
+  m_filtrosActivos.clear();
+  m_topN = 0;
+  m_rankingDesc = true;
+
+  // Resetear zoom y pan
+  m_zoom = 1.0f;
+  m_panOffset = QPointF(0, 0);
+
+  // Limpiar seleccion
+  limpiarSeleccion();
+
+  qDebug() << "RESET: Vista restaurada a estado inicial";
+
+  // Recargar datos originales
+  recargarCubo();
+
+  emit nivelCambiado("Vista general");
+  emit filtrosActualizados({});
+}
+
+QStringList VisorOlap::obtenerDimensionesDisponibles() const {
+  QStringList dims;
+  if (!m_metadata.dimensionX.nombre.isEmpty())
+    dims << m_metadata.dimensionX.nombre;
+  if (!m_metadata.dimensionZ.nombre.isEmpty())
+    dims << m_metadata.dimensionZ.nombre;
+  if (!m_metadata.dimensionY.nombre.isEmpty())
+    dims << m_metadata.dimensionY.nombre;
+  return dims;
+}
+
+QStringList VisorOlap::obtenerValoresDimension(const QString &dimension) {
+  QStringList valores;
+  QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
+  if (!db.isOpen())
+    return valores;
+
+  // Determinar tabla y columna
+  QString tabla, columna;
+  if (dimension == m_metadata.dimensionX.nombre) {
+    tabla = m_metadata.dimensionX.tabla;
+    columna = m_metadata.dimensionX.columna;
+  } else if (dimension == m_metadata.dimensionZ.nombre) {
+    tabla = m_metadata.dimensionZ.tabla;
+    columna = m_metadata.dimensionZ.columna;
+  } else {
+    return valores;
+  }
+
+  QString sql = QString("SELECT DISTINCT %1 FROM %2 ORDER BY %1 LIMIT 100")
+                    .arg(columna, tabla);
+  QSqlQuery q(db);
+  if (q.exec(sql)) {
+    while (q.next()) {
+      valores << q.value(0).toString();
+    }
+  }
+
+  return valores;
+}
+
+QString VisorOlap::obtenerNivelActual() const {
+  if (m_historialNavegacion.isEmpty()) {
+    return "Vista general";
+  }
+
+  QStringList niveles;
+  for (const NivelJerarquia &n : m_historialNavegacion) {
+    niveles << QString("%1: %2").arg(n.dimension, n.valor);
+  }
+  return niveles.join(" > ");
+}
+
+QStringList VisorOlap::obtenerFiltrosActivos() const {
+  QStringList filtros;
+  for (auto it = m_filtrosActivos.begin(); it != m_filtrosActivos.end(); ++it) {
+    filtros << QString("%1: %2").arg(it.key(), it.value().join(", "));
+  }
+  return filtros;
 }

@@ -7,9 +7,12 @@
 #include <QApplication>
 #include <QMenuBar>
 #include <QScreen>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QStatusBar>
 #include <QTimer>
 #include <QToolBar>
+
 
 VentanaPrincipal::VentanaPrincipal(QWidget *parent)
     : QMainWindow(parent), contenedorCentral(new QStackedWidget(this)) {
@@ -167,9 +170,13 @@ void VentanaPrincipal::alModeloConfirmado() {
   motor->iniciarCarga();
 }
 
+#include "DialogoDrillThrough.h"
+#include "DialogoFiltros.h"
 #include "PanelAnalisis.h"
+#include "PanelOperacionesOlap.h"
 #include "VisorOlap.h"
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 
 void VentanaPrincipal::alCargaFinalizada() {
   m_indicadorFase->setFaseActual(4);
@@ -178,23 +185,148 @@ void VentanaPrincipal::alCargaFinalizada() {
   statusBar()->showMessage("Fase 4: Explorador OLAP", 0);
 
   QWidget *containerFase4 = new QWidget(this);
-  QHBoxLayout *layout = new QHBoxLayout(containerFase4);
-  layout->setContentsMargins(12, 12, 12, 12);
-  layout->setSpacing(12);
+  QVBoxLayout *mainLayout = new QVBoxLayout(containerFase4);
+  mainLayout->setContentsMargins(0, 0, 0, 0);
+  mainLayout->setSpacing(0);
 
-  VisorOlap *visor = new VisorOlap(containerFase4);
-  PanelAnalisis *panel = new PanelAnalisis(containerFase4);
+  // Panel de operaciones OLAP (barra superior)
+  PanelOperacionesOlap *panelOps = new PanelOperacionesOlap(containerFase4);
+  mainLayout->addWidget(panelOps);
 
+  // Contenedor del visor y panel de analisis
+  QWidget *containerVisor = new QWidget(containerFase4);
+  QHBoxLayout *visorLayout = new QHBoxLayout(containerVisor);
+  visorLayout->setContentsMargins(12, 12, 12, 12);
+  visorLayout->setSpacing(12);
+
+  VisorOlap *visor = new VisorOlap(containerVisor);
+  PanelAnalisis *panel = new PanelAnalisis(containerVisor);
+
+  visorLayout->addWidget(visor, 3);
+  visorLayout->addWidget(panel, 1);
+  mainLayout->addWidget(containerVisor, 1);
+
+  // Conexiones basicas
   connect(panel, &PanelAnalisis::irAReportes, this,
           &VentanaPrincipal::alIrAReportes);
-
-  layout->addWidget(visor, 3);
-  layout->addWidget(panel, 1);
-
   connect(visor, &VisorOlap::celdaSeleccionada, panel,
           &PanelAnalisis::mostrarInfo);
   connect(visor, &VisorOlap::estadisticasActualizadas, panel,
           &PanelAnalisis::actualizarEstadisticas);
+
+  // Conexiones de operaciones OLAP
+  connect(panelOps, &PanelOperacionesOlap::drillDown, visor,
+          &VisorOlap::ejecutarDrillDown);
+  connect(panelOps, &PanelOperacionesOlap::rollUp, visor,
+          &VisorOlap::ejecutarRollUp);
+  connect(panelOps, &PanelOperacionesOlap::pivot, visor,
+          &VisorOlap::ejecutarPivot);
+  connect(panelOps, &PanelOperacionesOlap::drillThrough, visor,
+          &VisorOlap::ejecutarDrillThrough);
+  connect(panelOps, &PanelOperacionesOlap::resetView, visor,
+          &VisorOlap::resetearVista);
+
+  // Slice: Mostrar dialogo de filtro por una dimension
+  connect(panelOps, &PanelOperacionesOlap::slice, this, [visor, this]() {
+    DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Slice, this);
+    dlg->setDimensionesDisponibles(visor->obtenerDimensionesDisponibles());
+
+    connect(dlg, &DialogoFiltros::dimensionCambiada, this,
+            [dlg, visor](const QString &dim) {
+              dlg->setValoresDimension(dim,
+                                       visor->obtenerValoresDimension(dim));
+            });
+
+    // Cargar valores iniciales
+    if (!visor->obtenerDimensionesDisponibles().isEmpty()) {
+      QString primeraDim = visor->obtenerDimensionesDisponibles().first();
+      dlg->setValoresDimension(primeraDim,
+                               visor->obtenerValoresDimension(primeraDim));
+    }
+
+    if (dlg->exec() == QDialog::Accepted) {
+      visor->ejecutarSlice(dlg->getDimensionSeleccionada(),
+                           dlg->getValoresSeleccionados());
+    }
+    dlg->deleteLater();
+  });
+
+  // Dice: Dialogo de filtros multiples
+  connect(panelOps, &PanelOperacionesOlap::dice, this, [visor, this]() {
+    DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Dice, this);
+    dlg->setDimensionesDisponibles(visor->obtenerDimensionesDisponibles());
+
+    connect(dlg, &DialogoFiltros::dimensionCambiada, this,
+            [dlg, visor](const QString &dim) {
+              dlg->setValoresDimension(dim,
+                                       visor->obtenerValoresDimension(dim));
+            });
+
+    if (!visor->obtenerDimensionesDisponibles().isEmpty()) {
+      QString primeraDim = visor->obtenerDimensionesDisponibles().first();
+      dlg->setValoresDimension(primeraDim,
+                               visor->obtenerValoresDimension(primeraDim));
+    }
+
+    if (dlg->exec() == QDialog::Accepted) {
+      visor->ejecutarDice(dlg->getTodosLosFiltros());
+    }
+    dlg->deleteLater();
+  });
+
+  // Ranking: Dialogo simple para Top N
+  connect(panelOps, &PanelOperacionesOlap::ranking, this, [visor]() {
+    visor->ejecutarRanking(10, true); // Top 10 descendente por defecto
+  });
+
+  // Drill Through: Mostrar dialogo con registros
+  connect(
+      visor, &VisorOlap::solicitarDrillThrough, this,
+      [this, visor](const QString &dimX, const QString &dimZ, double valor) {
+        DialogoDrillThrough *dlg = new DialogoDrillThrough(this);
+        dlg->setTitulo(dimX, dimZ, valor);
+
+        // Obtener datos de drill-through desde la BD
+        QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
+        if (db.isOpen()) {
+          QString sql =
+              QString(
+                  "SELECT t.fecha, p.nombre as producto, c.nombre as cliente, "
+                  "f.cantidad, f.total_venta, f.ganancia "
+                  "FROM fact_ventas f "
+                  "JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo "
+                  "JOIN dim_producto p ON f.id_producto = p.id_producto "
+                  "JOIN dim_cliente c ON f.id_cliente = c.id_cliente "
+                  "WHERE p.id_producto::text = '%1' OR c.id_cliente::text = "
+                  "'%2' "
+                  "ORDER BY t.fecha DESC LIMIT 100")
+                  .arg(dimX, dimZ);
+
+          QSqlQuery q(db);
+          if (q.exec(sql)) {
+            QStringList cols = {"Fecha",    "Producto", "Cliente",
+                                "Cantidad", "Total",    "Ganancia"};
+            QVector<QStringList> filas;
+            while (q.next()) {
+              QStringList fila;
+              for (int i = 0; i < 6; i++) {
+                fila << q.value(i).toString();
+              }
+              filas << fila;
+            }
+            dlg->cargarDatos(cols, filas);
+          }
+        }
+
+        dlg->exec();
+        dlg->deleteLater();
+      });
+
+  // Actualizar panel de operaciones cuando cambian filtros
+  connect(visor, &VisorOlap::nivelCambiado, panelOps,
+          &PanelOperacionesOlap::setNivelActual);
+  connect(visor, &VisorOlap::filtrosActualizados, panelOps,
+          &PanelOperacionesOlap::setFiltrosActivos);
 
   contenedorCentral->addWidget(containerFase4);
   contenedorCentral->setCurrentWidget(containerFase4);
