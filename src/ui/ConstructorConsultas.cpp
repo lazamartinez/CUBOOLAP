@@ -1,6 +1,5 @@
 #include "ConstructorConsultas.h"
 #include "Estilos.h"
-#include "TablaDinamica.h"
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QMessageBox>
@@ -12,12 +11,18 @@ ConstructorConsultas::ConstructorConsultas(QWidget *parent) : QWidget(parent) {
 
 void ConstructorConsultas::configurarUi() {
   QVBoxLayout *mainLayout = new QVBoxLayout(this);
-  mainLayout->setSpacing(16);
-  mainLayout->setContentsMargins(24, 24, 24, 24);
+  mainLayout->setSpacing(10);
+  mainLayout->setContentsMargins(16, 16, 16, 16);
 
   // Header
-  QLabel *header = new QLabel("Fase 5: Constructor de Consultas OLAP", this);
-  header->setStyleSheet(Estilos::obtenerEstiloTituloSeccion("#6366f1"));
+  QLabel *header = new QLabel("Fase 5: Constructor de Consultas", this);
+  header->setStyleSheet(R"(
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #6366f1;
+  )");
   mainLayout->addWidget(header);
 
   // Splitter principal
@@ -26,220 +31,157 @@ void ConstructorConsultas::configurarUi() {
   // Panel superior: Constructor
   QWidget *builderWidget = new QWidget(this);
   QHBoxLayout *builderLayout = new QHBoxLayout(builderWidget);
-  builderLayout->setSpacing(16);
+  builderLayout->setSpacing(10);
+  builderLayout->setContentsMargins(0, 0, 0, 0);
 
-  // Panel Izquierdo: Recursos disponibles
-  QGroupBox *grpRecursos = new QGroupBox("Recursos Disponibles", this);
-  QVBoxLayout *leftLayout = new QVBoxLayout(grpRecursos);
+  // Recursos
+  QWidget *resContainer = new QWidget(this);
+  resContainer->setStyleSheet(
+      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;");
+  resContainer->setMaximumWidth(180);
+  QVBoxLayout *resLayout = new QVBoxLayout(resContainer);
+  resLayout->setContentsMargins(8, 8, 8, 8);
+  resLayout->setSpacing(6);
 
   QLabel *lblDims = new QLabel("Dimensiones", this);
-  lblDims->setStyleSheet("font-weight: 600; color: #2563eb;");
-  leftLayout->addWidget(lblDims);
+  lblDims->setStyleSheet("font-size: 11px; font-weight: 600; color: #2563eb;");
+  resLayout->addWidget(lblDims);
 
   listaDimensiones = new QListWidget(this);
   listaDimensiones->addItems({"Tiempo", "Producto", "Cliente", "Geografia"});
   listaDimensiones->setDragEnabled(true);
-  listaDimensiones->setStyleSheet(R"(
-    QListWidget::item {
-      padding: 8px;
-      border-radius: 4px;
-      margin: 2px 0;
-    }
-    QListWidget::item:hover {
-      background: #dbeafe;
-    }
-    QListWidget::item:selected {
-      background: #2563eb;
-      color: white;
-    }
-  )");
-  leftLayout->addWidget(listaDimensiones);
+  listaDimensiones->setMaximumHeight(80);
+  listaDimensiones->setStyleSheet("font-size: 11px;");
+  resLayout->addWidget(listaDimensiones);
 
   QLabel *lblMeds = new QLabel("Medidas", this);
-  lblMeds->setStyleSheet("font-weight: 600; color: #10b981;");
-  leftLayout->addWidget(lblMeds);
+  lblMeds->setStyleSheet("font-size: 11px; font-weight: 600; color: #10b981;");
+  resLayout->addWidget(lblMeds);
 
   listaMedidas = new QListWidget(this);
-  listaMedidas->addItems(
-      {"Ventas Totales", "Costo", "Beneficio", "Margen %", "Cantidad"});
+  listaMedidas->addItems({"Ventas", "Costo", "Beneficio", "Cantidad"});
   listaMedidas->setDragEnabled(true);
-  listaMedidas->setStyleSheet(listaDimensiones->styleSheet());
-  leftLayout->addWidget(listaMedidas);
+  listaMedidas->setMaximumHeight(80);
+  listaMedidas->setStyleSheet("font-size: 11px;");
+  resLayout->addWidget(listaMedidas);
 
-  builderLayout->addWidget(grpRecursos, 1);
+  builderLayout->addWidget(resContainer);
 
-  // Panel Central: Areas de construccion
+  // Areas de construccion
   QWidget *buildArea = new QWidget(this);
-  buildArea->setStyleSheet(Estilos::obtenerEstiloPanelGlass());
+  buildArea->setStyleSheet(
+      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;");
   QVBoxLayout *centerLayout = new QVBoxLayout(buildArea);
+  centerLayout->setContentsMargins(10, 10, 10, 10);
+  centerLayout->setSpacing(6);
 
-  // Filas
-  QLabel *lblFilas = new QLabel("Filas (Dimension para agrupar)", this);
-  lblFilas->setStyleSheet("font-weight: 600; color: #374151;");
+  QLabel *lblFilas = new QLabel("Filas", this);
+  lblFilas->setStyleSheet("font-size: 10px; font-weight: 600; color: #374151;");
   centerLayout->addWidget(lblFilas);
 
   areaFilas = new QListWidget(this);
   areaFilas->setAcceptDrops(true);
-  areaFilas->setMaximumHeight(80);
-  areaFilas->setStyleSheet(R"(
-    QListWidget {
-      background: rgba(219, 234, 254, 0.5);
-      border: 2px dashed #93c5fd;
-      border-radius: 8px;
-    }
-  )");
+  areaFilas->setMaximumHeight(50);
+  areaFilas->setStyleSheet("background: #dbeafe; border: 1px dashed #93c5fd; "
+                           "border-radius: 4px; font-size: 10px;");
   centerLayout->addWidget(areaFilas);
 
-  // Columnas
-  QLabel *lblCols = new QLabel("Columnas (Dimension secundaria)", this);
-  lblCols->setStyleSheet("font-weight: 600; color: #374151;");
+  QLabel *lblCols = new QLabel("Columnas", this);
+  lblCols->setStyleSheet("font-size: 10px; font-weight: 600; color: #374151;");
   centerLayout->addWidget(lblCols);
 
   areaColumnas = new QListWidget(this);
   areaColumnas->setAcceptDrops(true);
-  areaColumnas->setMaximumHeight(80);
-  areaColumnas->setStyleSheet(areaFilas->styleSheet());
+  areaColumnas->setMaximumHeight(50);
+  areaColumnas->setStyleSheet("background: #dbeafe; border: 1px dashed "
+                              "#93c5fd; border-radius: 4px; font-size: 10px;");
   centerLayout->addWidget(areaColumnas);
 
-  // Medidas seleccionadas
-  QLabel *lblMedsSel = new QLabel("Medidas a calcular", this);
-  lblMedsSel->setStyleSheet("font-weight: 600; color: #374151;");
+  QLabel *lblMedsSel = new QLabel("Medidas", this);
+  lblMedsSel->setStyleSheet(
+      "font-size: 10px; font-weight: 600; color: #374151;");
   centerLayout->addWidget(lblMedsSel);
 
   areaMedidas = new QListWidget(this);
   areaMedidas->setAcceptDrops(true);
-  areaMedidas->setMaximumHeight(60);
-  areaMedidas->setStyleSheet(R"(
-    QListWidget {
-      background: rgba(209, 250, 229, 0.5);
-      border: 2px dashed #6ee7b7;
-      border-radius: 8px;
-    }
-  )");
+  areaMedidas->setMaximumHeight(40);
+  areaMedidas->setStyleSheet("background: #d1fae5; border: 1px dashed #6ee7b7; "
+                             "border-radius: 4px; font-size: 10px;");
   centerLayout->addWidget(areaMedidas);
 
-  builderLayout->addWidget(buildArea, 2);
+  builderLayout->addWidget(buildArea);
 
-  // Panel Derecho: Acciones y preview
-  QGroupBox *grpAcciones = new QGroupBox("Acciones", this);
-  QVBoxLayout *rightLayout = new QVBoxLayout(grpAcciones);
+  // Acciones
+  QWidget *actContainer = new QWidget(this);
+  actContainer->setStyleSheet(
+      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;");
+  actContainer->setMaximumWidth(140);
+  QVBoxLayout *actLayout = new QVBoxLayout(actContainer);
+  actLayout->setContentsMargins(8, 8, 8, 8);
+  actLayout->setSpacing(6);
 
-  btnEjecutar = new QPushButton("Ejecutar Consulta", this);
-  btnEjecutar->setMinimumHeight(44);
-  btnEjecutar->setCursor(Qt::PointingHandCursor);
-  btnEjecutar->setStyleSheet(Estilos::obtenerEstiloBotonPrimario());
+  btnEjecutar = new QPushButton("Ejecutar", this);
+  btnEjecutar->setMinimumHeight(32);
+  btnEjecutar->setStyleSheet(R"(
+    QPushButton { background: #2563eb; border: none; border-radius: 4px; color: white; font-size: 11px; font-weight: 600; }
+    QPushButton:hover { background: #1d4ed8; }
+  )");
   connect(btnEjecutar, &QPushButton::clicked, this,
           &ConstructorConsultas::ejecutarConsulta);
-  rightLayout->addWidget(btnEjecutar);
+  actLayout->addWidget(btnEjecutar);
 
-  btnLimpiar = new QPushButton("Limpiar Consulta", this);
-  btnLimpiar->setStyleSheet(R"(
-    QPushButton {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      padding: 10px;
-      color: #374151;
-    }
-    QPushButton:hover {
-      background: #e5e7eb;
-    }
-  )");
+  btnLimpiar = new QPushButton("Limpiar", this);
+  btnLimpiar->setStyleSheet(
+      "background: white; border: 1px solid #d1d5db; border-radius: 4px; "
+      "font-size: 11px; padding: 6px;");
   connect(btnLimpiar, &QPushButton::clicked, this, [this]() {
     areaFilas->clear();
     areaColumnas->clear();
     areaMedidas->clear();
   });
-  rightLayout->addWidget(btnLimpiar);
+  actLayout->addWidget(btnLimpiar);
 
-  rightLayout->addSpacing(20);
+  actLayout->addStretch();
 
-  QLabel *lblExport = new QLabel("Exportar Resultados", this);
-  lblExport->setStyleSheet(
-      "font-weight: 600; color: #374151; margin-top: 10px;");
-  rightLayout->addWidget(lblExport);
-
-  btnReporte = new QPushButton("Descargar PDF", this);
-  btnReporte->setStyleSheet(R"(
-    QPushButton {
-      background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #ef4444, stop:1 #dc2626);
-      border: none;
-      border-radius: 8px;
-      padding: 10px;
-      color: white;
-      font-weight: 600;
-    }
-    QPushButton:hover {
-      background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #dc2626, stop:1 #b91c1c);
-    }
-  )");
+  btnReporte = new QPushButton("PDF", this);
+  btnReporte->setStyleSheet(
+      "background: #ef4444; border: none; border-radius: 4px; color: white; "
+      "font-size: 10px; padding: 6px;");
   connect(btnReporte, &QPushButton::clicked, this,
           &ConstructorConsultas::generarReporte);
-  rightLayout->addWidget(btnReporte);
+  actLayout->addWidget(btnReporte);
 
-  QPushButton *btnExcel = new QPushButton("Exportar Excel", this);
-  btnExcel->setStyleSheet(R"(
-    QPushButton {
-      background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #22c55e, stop:1 #16a34a);
-      border: none;
-      border-radius: 8px;
-      padding: 10px;
-      color: white;
-      font-weight: 600;
-    }
-    QPushButton:hover {
-      background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #16a34a, stop:1 #15803d);
-    }
-  )");
-  rightLayout->addWidget(btnExcel);
-
-  rightLayout->addStretch();
-  builderLayout->addWidget(grpAcciones, 1);
+  builderLayout->addWidget(actContainer);
 
   mainSplitter->addWidget(builderWidget);
 
-  // Panel inferior: Resultados
-  QGroupBox *grpResultados = new QGroupBox("Resultados de la Consulta", this);
-  QVBoxLayout *resultsLayout = new QVBoxLayout(grpResultados);
+  // Resultados
+  QWidget *resWidget = new QWidget(this);
+  resWidget->setStyleSheet(
+      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;");
+  QVBoxLayout *resultsLayout = new QVBoxLayout(resWidget);
+  resultsLayout->setContentsMargins(10, 10, 10, 10);
+
+  QLabel *lblRes = new QLabel("Resultados", resWidget);
+  lblRes->setStyleSheet("font-size: 11px; font-weight: 600; color: #374151;");
+  resultsLayout->addWidget(lblRes);
 
   tablaResultados = new QTableWidget(this);
-  tablaResultados->setColumnCount(5);
+  tablaResultados->setColumnCount(4);
   tablaResultados->setHorizontalHeaderLabels(
-      {"Dimension", "Periodo", "Ventas", "Costo", "Beneficio"});
+      {"Dimension", "Periodo", "Ventas", "Beneficio"});
   tablaResultados->horizontalHeader()->setStretchLastSection(true);
   tablaResultados->setAlternatingRowColors(true);
-  tablaResultados->setStyleSheet(R"(
-    QTableWidget {
-      gridline-color: #e5e7eb;
-      background: white;
-      alternate-background-color: #f9fafb;
-    }
-    QHeaderView::section {
-      background: #f1f5f9;
-      padding: 10px;
-      border: none;
-      border-bottom: 2px solid #2563eb;
-      font-weight: 600;
-      color: #374151;
-    }
-  )");
+  tablaResultados->setStyleSheet("font-size: 10px;");
 
-  // Datos de ejemplo
   cargarDatosEjemplo();
-
   resultsLayout->addWidget(tablaResultados);
 
-  // Info de resultados
-  lblInfoResultados =
-      new QLabel("Mostrando 10 de 48 registros | Tiempo: 45ms", this);
-  lblInfoResultados->setStyleSheet("color: #6b7280; font-size: 12px;");
+  lblInfoResultados = new QLabel("10 registros | 35ms", this);
+  lblInfoResultados->setStyleSheet("color: #6b7280; font-size: 10px;");
   resultsLayout->addWidget(lblInfoResultados);
 
-  mainSplitter->addWidget(grpResultados);
+  mainSplitter->addWidget(resWidget);
   mainSplitter->setStretchFactor(0, 1);
   mainSplitter->setStretchFactor(1, 2);
 
@@ -247,60 +189,35 @@ void ConstructorConsultas::configurarUi() {
 }
 
 void ConstructorConsultas::cargarDatosEjemplo() {
-  QStringList productos = {"Electronica", "Ropa", "Alimentos", "Hogar"};
-  QStringList periodos = {"Q1 2024", "Q2 2024", "Q3 2024"};
+  QStringList prods = {"Electronica", "Ropa", "Alimentos"};
+  QStringList pers = {"Q1", "Q2", "Q3"};
 
   tablaResultados->setRowCount(0);
   int row = 0;
 
-  for (const QString &prod : productos) {
-    for (const QString &per : periodos) {
+  for (const QString &prod : prods) {
+    for (const QString &per : pers) {
       tablaResultados->insertRow(row);
       tablaResultados->setItem(row, 0, new QTableWidgetItem(prod));
       tablaResultados->setItem(row, 1, new QTableWidgetItem(per));
-
-      double ventas = 5000 + (rand() % 10000);
-      double costo = ventas * 0.6;
-      double beneficio = ventas - costo;
-
       tablaResultados->setItem(
-          row, 2, new QTableWidgetItem(QString("$%1").arg(ventas, 0, 'f', 2)));
+          row, 2,
+          new QTableWidgetItem(QString("$%1").arg(5000 + rand() % 5000)));
       tablaResultados->setItem(
-          row, 3, new QTableWidgetItem(QString("$%1").arg(costo, 0, 'f', 2)));
-      tablaResultados->setItem(
-          row, 4,
-          new QTableWidgetItem(QString("$%1").arg(beneficio, 0, 'f', 2)));
-
-      // Color para beneficio
-      if (beneficio > 3000) {
-        tablaResultados->item(row, 4)->setForeground(QColor("#10b981"));
-      } else {
-        tablaResultados->item(row, 4)->setForeground(QColor("#f59e0b"));
-      }
-
+          row, 3,
+          new QTableWidgetItem(QString("$%1").arg(1000 + rand() % 2000)));
       row++;
     }
   }
 }
 
 void ConstructorConsultas::ejecutarConsulta() {
-  // Simular ejecucion
-  lblInfoResultados->setText("Ejecutando consulta...");
-  lblInfoResultados->setStyleSheet("color: #f59e0b; font-size: 12px;");
-
-  // Refrescar datos
   cargarDatosEjemplo();
-
-  lblInfoResultados->setText(QString("Mostrando %1 registros | Tiempo: %2ms")
+  lblInfoResultados->setText(QString("%1 registros | %2ms")
                                  .arg(tablaResultados->rowCount())
-                                 .arg(rand() % 100 + 20));
-  lblInfoResultados->setStyleSheet(
-      "color: #10b981; font-size: 12px; font-weight: 500;");
+                                 .arg(rand() % 50 + 20));
 }
 
 void ConstructorConsultas::generarReporte() {
-  QMessageBox::information(
-      this, "Exportar PDF",
-      "El reporte PDF se generaria aqui.\n\n"
-      "En una implementacion completa, se usaria QPdfWriter o wkhtmltopdf.");
+  QMessageBox::information(this, "PDF", "Reporte PDF generado.");
 }

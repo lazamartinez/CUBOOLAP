@@ -21,118 +21,163 @@ DashboardReconocimiento::DashboardReconocimiento(QWidget *parent)
 
 void DashboardReconocimiento::configurarUi() {
   QVBoxLayout *mainLayout = new QVBoxLayout(this);
-  mainLayout->setSpacing(20);
-  mainLayout->setContentsMargins(24, 24, 24, 24);
+  mainLayout->setSpacing(12);
+  mainLayout->setContentsMargins(16, 16, 16, 16);
 
-  // ========== HEADER ==========
+  // Header compacto
   QLabel *titulo = new QLabel("Fase 1: Diagnostico del Esquema", this);
-  titulo->setStyleSheet(Estilos::obtenerEstiloTituloSeccion("#2563eb"));
-  titulo->setAlignment(Qt::AlignLeft);
+  titulo->setStyleSheet(R"(
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2563eb;
+  )");
   mainLayout->addWidget(titulo);
 
-  // ========== ESTADISTICAS RAPIDAS ==========
-  QWidget *statsWidget = new QWidget(this);
-  QHBoxLayout *statsLayout = new QHBoxLayout(statsWidget);
-  statsLayout->setSpacing(16);
+  // Estadisticas en fila compacta
+  QHBoxLayout *statsLayout = new QHBoxLayout();
+  statsLayout->setSpacing(10);
 
   lblTotalTablas = crearCardEstadistica("Tablas", "0", "#2563eb");
   lblTotalFilas = crearCardEstadistica("Registros", "0", "#6366f1");
   lblTotalFK = crearCardEstadistica("Relaciones", "0", "#10b981");
-  lblTamanoDB = crearCardEstadistica("Tamano DB", "0 MB", "#f59e0b");
+  lblTamanoDB = crearCardEstadistica("Tamano", "0 MB", "#f59e0b");
 
   statsLayout->addWidget(lblTotalTablas);
   statsLayout->addWidget(lblTotalFilas);
   statsLayout->addWidget(lblTotalFK);
   statsLayout->addWidget(lblTamanoDB);
-  mainLayout->addWidget(statsWidget);
+  mainLayout->addLayout(statsLayout);
 
-  // ========== GRAFICOS ==========
+  // Graficos lado a lado (compactos)
   QHBoxLayout *chartsLayout = new QHBoxLayout();
-  chartsLayout->setSpacing(20);
+  chartsLayout->setSpacing(12);
 
-  // Grafico de distribucion (Pastel)
+  // Grafico Pie
   QWidget *pieContainer = new QWidget(this);
-  pieContainer->setStyleSheet(Estilos::obtenerEstiloPanelGlass());
+  pieContainer->setStyleSheet(
+      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;");
   QVBoxLayout *pieLayout = new QVBoxLayout(pieContainer);
+  pieLayout->setContentsMargins(8, 8, 8, 8);
 
-  QLabel *lblPie = new QLabel("Distribucion por Tamano", pieContainer);
-  lblPie->setStyleSheet("font-size: 15px; font-weight: 600; color: #374151;");
+  QLabel *lblPie = new QLabel("Distribucion", pieContainer);
+  lblPie->setStyleSheet("font-size: 12px; font-weight: 600; color: #374151;");
   pieLayout->addWidget(lblPie);
 
   QChart *chartPastel = new QChart();
-  chartPastel->setTitle("");
   chartPastel->setTheme(QChart::ChartThemeLight);
-  chartPastel->setBackgroundBrush(QBrush(Qt::transparent));
-  chartPastel->legend()->setVisible(true);
-  chartPastel->legend()->setAlignment(Qt::AlignRight);
+  chartPastel->setBackgroundBrush(Qt::transparent);
+  chartPastel->legend()->setVisible(false);
+  chartPastel->setMargins(QMargins(0, 0, 0, 0));
 
   graficoPastelView = new QChartView(chartPastel);
   graficoPastelView->setRenderHint(QPainter::Antialiasing);
-  graficoPastelView->setMinimumHeight(260);
+  graficoPastelView->setMinimumHeight(160);
+  graficoPastelView->setMaximumHeight(180);
   graficoPastelView->setStyleSheet("background: transparent;");
   pieLayout->addWidget(graficoPastelView);
   chartsLayout->addWidget(pieContainer);
 
-  // Grafico de barras (Top Tablas)
+  // Grafico Barras
   QWidget *barContainer = new QWidget(this);
-  barContainer->setStyleSheet(Estilos::obtenerEstiloPanelGlass());
+  barContainer->setStyleSheet(
+      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;");
   QVBoxLayout *barLayout = new QVBoxLayout(barContainer);
+  barLayout->setContentsMargins(8, 8, 8, 8);
 
-  QLabel *lblBar = new QLabel("Top 10 Tablas por Registros", barContainer);
-  lblBar->setStyleSheet("font-size: 15px; font-weight: 600; color: #374151;");
+  QLabel *lblBar = new QLabel("Top Tablas", barContainer);
+  lblBar->setStyleSheet("font-size: 12px; font-weight: 600; color: #374151;");
   barLayout->addWidget(lblBar);
 
   QChart *chartBarras = new QChart();
-  chartBarras->setTitle("");
   chartBarras->setTheme(QChart::ChartThemeLight);
-  chartBarras->setBackgroundBrush(QBrush(Qt::transparent));
+  chartBarras->setBackgroundBrush(Qt::transparent);
+  chartBarras->setMargins(QMargins(0, 0, 0, 0));
 
   graficoBarrasView = new QChartView(chartBarras);
   graficoBarrasView->setRenderHint(QPainter::Antialiasing);
-  graficoBarrasView->setMinimumHeight(260);
+  graficoBarrasView->setMinimumHeight(160);
+  graficoBarrasView->setMaximumHeight(180);
   graficoBarrasView->setStyleSheet("background: transparent;");
   barLayout->addWidget(graficoBarrasView);
   chartsLayout->addWidget(barContainer);
 
   mainLayout->addLayout(chartsLayout);
 
-  // ========== TABLAS DETECTADAS ==========
+  // Lista de tablas (compacta)
   QGroupBox *grpTablas = new QGroupBox("Tablas Detectadas", this);
+  grpTablas->setStyleSheet(R"(
+    QGroupBox {
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
+    }
+    QGroupBox::title {
+      subcontrol-position: top left;
+      padding: 2px 8px;
+      color: #374151;
+    }
+  )");
   QVBoxLayout *tablasLayout = new QVBoxLayout(grpTablas);
+  tablasLayout->setContentsMargins(8, 16, 8, 8);
+
   listaTablas = new QListWidget(grpTablas);
-  listaTablas->setMinimumHeight(120);
-  listaTablas->setMaximumHeight(160);
+  listaTablas->setMaximumHeight(100);
+  listaTablas->setStyleSheet("font-size: 11px;");
   tablasLayout->addWidget(listaTablas);
   mainLayout->addWidget(grpTablas);
 
-  // ========== SUGERENCIAS OLAP ==========
-  QHBoxLayout *sugerenciasLayout = new QHBoxLayout();
-  sugerenciasLayout->setSpacing(16);
+  // Sugerencias (compactas)
+  QHBoxLayout *sugLayout = new QHBoxLayout();
+  sugLayout->setSpacing(10);
 
-  QGroupBox *grpHechos = new QGroupBox("Posibles Tablas de Hechos", this);
-  QVBoxLayout *hechosLayout = new QVBoxLayout(grpHechos);
+  QWidget *grpHechos = new QWidget(this);
+  grpHechos->setStyleSheet("background: #fef3c7; border: 1px solid #fcd34d; "
+                           "border-radius: 6px; padding: 8px;");
+  QVBoxLayout *hLayout = new QVBoxLayout(grpHechos);
+  hLayout->setContentsMargins(8, 8, 8, 8);
+  QLabel *lblHT = new QLabel("Posibles Facts", grpHechos);
+  lblHT->setStyleSheet("font-size: 11px; font-weight: 600; color: #b45309;");
+  hLayout->addWidget(lblHT);
   lblHechosSugeridos = new QLabel("Analizando...", grpHechos);
-  lblHechosSugeridos->setWordWrap(true);
-  lblHechosSugeridos->setStyleSheet("color: #f59e0b; font-size: 13px;");
-  hechosLayout->addWidget(lblHechosSugeridos);
-  sugerenciasLayout->addWidget(grpHechos);
+  lblHechosSugeridos->setStyleSheet("font-size: 11px; color: #92400e;");
+  hLayout->addWidget(lblHechosSugeridos);
+  sugLayout->addWidget(grpHechos);
 
-  QGroupBox *grpDims = new QGroupBox("Posibles Dimensiones", this);
-  QVBoxLayout *dimsLayout = new QVBoxLayout(grpDims);
+  QWidget *grpDims = new QWidget(this);
+  grpDims->setStyleSheet("background: #d1fae5; border: 1px solid #6ee7b7; "
+                         "border-radius: 6px; padding: 8px;");
+  QVBoxLayout *dLayout = new QVBoxLayout(grpDims);
+  dLayout->setContentsMargins(8, 8, 8, 8);
+  QLabel *lblDT = new QLabel("Posibles Dims", grpDims);
+  lblDT->setStyleSheet("font-size: 11px; font-weight: 600; color: #065f46;");
+  dLayout->addWidget(lblDT);
   lblDimensionesSugeridas = new QLabel("Analizando...", grpDims);
-  lblDimensionesSugeridas->setWordWrap(true);
-  lblDimensionesSugeridas->setStyleSheet("color: #10b981; font-size: 13px;");
-  dimsLayout->addWidget(lblDimensionesSugeridas);
-  sugerenciasLayout->addWidget(grpDims);
+  lblDimensionesSugeridas->setStyleSheet("font-size: 11px; color: #047857;");
+  dLayout->addWidget(lblDimensionesSugeridas);
+  sugLayout->addWidget(grpDims);
 
-  mainLayout->addLayout(sugerenciasLayout);
+  mainLayout->addLayout(sugLayout);
 
-  // ========== BOTON CONFIRMAR ==========
-  QPushButton *btnConfirmar =
-      new QPushButton("Confirmar y Continuar a Fase 2", this);
-  btnConfirmar->setMinimumHeight(48);
+  // Boton continuar
+  QPushButton *btnConfirmar = new QPushButton("Continuar a Fase 2", this);
+  btnConfirmar->setMinimumHeight(36);
   btnConfirmar->setCursor(Qt::PointingHandCursor);
-  btnConfirmar->setStyleSheet(Estilos::obtenerEstiloBotonExito());
+  btnConfirmar->setStyleSheet(R"(
+    QPushButton {
+      background: #10b981;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    QPushButton:hover { background: #059669; }
+  )");
   connect(btnConfirmar, &QPushButton::clicked, this,
           &DashboardReconocimiento::confirmarReconocimiento);
   mainLayout->addWidget(btnConfirmar);
@@ -144,27 +189,26 @@ QWidget *DashboardReconocimiento::crearCardEstadistica(const QString &etiqueta,
 
   QWidget *card = new QWidget(this);
   card->setStyleSheet(QString(R"(
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
     border: 1px solid #e5e7eb;
-    border-left: 4px solid %1;
-    border-radius: 10px;
-    padding: 16px;
+    border-left: 3px solid %1;
+    border-radius: 6px;
   )")
                           .arg(color));
 
   QVBoxLayout *layout = new QVBoxLayout(card);
   layout->setAlignment(Qt::AlignCenter);
-  layout->setSpacing(6);
+  layout->setSpacing(2);
+  layout->setContentsMargins(10, 8, 10, 8);
 
   QLabel *lblValor = new QLabel(valor, card);
   lblValor->setObjectName("valorCard");
   lblValor->setStyleSheet(
-      QString("font-size: 28px; font-weight: 700; color: %1;").arg(color));
+      QString("font-size: 18px; font-weight: 700; color: %1;").arg(color));
   lblValor->setAlignment(Qt::AlignCenter);
 
   QLabel *lblEtiqueta = new QLabel(etiqueta, card);
-  lblEtiqueta->setStyleSheet(
-      "font-size: 13px; color: #6b7280; font-weight: 500;");
+  lblEtiqueta->setStyleSheet("font-size: 10px; color: #6b7280;");
   lblEtiqueta->setAlignment(Qt::AlignCenter);
 
   layout->addWidget(lblValor);
@@ -181,89 +225,64 @@ void DashboardReconocimiento::cargarDatos(AnalizadorEsquema *analizador) {
   QVariantMap stats = analizador->obtenerEstadisticasGeneral();
   QVector<InfoRelacionFK> relaciones = analizador->obtenerRelaciones();
 
-  // Actualizar cards de estadisticas
   actualizarCardValor(lblTotalTablas, QString::number(tablas.size()));
 
   long long totalFilas = stats["total_filas"].toLongLong();
-  QString filasStr;
-  if (totalFilas > 1000000) {
-    filasStr = QString::number(totalFilas / 1000000.0, 'f', 1) + "M";
-  } else if (totalFilas > 1000) {
-    filasStr = QString::number(totalFilas / 1000.0, 'f', 1) + "K";
-  } else {
-    filasStr = QString::number(totalFilas);
-  }
+  QString filasStr = totalFilas > 1000
+                         ? QString::number(totalFilas / 1000.0, 'f', 1) + "K"
+                         : QString::number(totalFilas);
   actualizarCardValor(lblTotalFilas, filasStr);
-
   actualizarCardValor(lblTotalFK, QString::number(relaciones.size()));
 
   long long totalBytes = stats["total_bytes"].toLongLong();
-  QString tamanoStr;
-  if (totalBytes > 1073741824) {
-    tamanoStr = QString::number(totalBytes / 1073741824.0, 'f', 2) + " GB";
-  } else {
-    tamanoStr = QString::number(totalBytes / 1048576.0, 'f', 1) + " MB";
-  }
+  QString tamanoStr =
+      totalBytes > 1048576
+          ? QString::number(totalBytes / 1048576.0, 'f', 1) + " MB"
+          : QString::number(totalBytes / 1024.0, 'f', 0) + " KB";
   actualizarCardValor(lblTamanoDB, tamanoStr);
 
-  // Llenar lista de tablas
   listaTablas->clear();
   for (const auto &t : tablas) {
-    QString texto = QString("%1  |  %2 filas  |  %3")
-                        .arg(t.nombre, -25)
-                        .arg(t.filaEstimada)
-                        .arg(t.tamano);
-    listaTablas->addItem(texto);
+    listaTablas->addItem(
+        QString("%1 - %2 filas").arg(t.nombre).arg(t.filaEstimada));
   }
 
-  // Grafico Pie (distribucion por tamano)
+  // Graficos
   QPieSeries *pieSeries = new QPieSeries();
+  pieSeries->setHoleSize(0.5);
   int count = 0;
-  long long totalBytesChart = 0;
-  for (const auto &t : tablas)
-    totalBytesChart += t.tamanoBytes;
-
   for (const auto &t : tablas) {
-    if (count++ >= 8)
+    if (count++ >= 5)
       break;
     if (t.tamanoBytes > 0) {
-      QPieSlice *slice = pieSeries->append(t.nombre, t.tamanoBytes);
-      slice->setLabelVisible(t.tamanoBytes > totalBytesChart * 0.05);
+      pieSeries->append(t.nombre, t.tamanoBytes);
     }
   }
-  pieSeries->setHoleSize(0.45);
-
   QChart *chartP = graficoPastelView->chart();
   chartP->removeAllSeries();
   chartP->addSeries(pieSeries);
 
-  // Grafico Barras (top tablas por filas)
   QHorizontalBarSeries *barSeries = new QHorizontalBarSeries();
-  QBarSet *set0 = new QBarSet("Registros");
+  QBarSet *set0 = new QBarSet("");
   set0->setColor(QColor("#2563eb"));
-  QStringList categorias;
-
+  QStringList cats;
   count = 0;
   for (const auto &t : tablas) {
-    if (count++ >= 10)
+    if (count++ >= 5)
       break;
     *set0 << t.filaEstimada;
-    categorias << t.nombre;
+    cats << t.nombre;
   }
   barSeries->append(set0);
 
   QChart *chartB = graficoBarrasView->chart();
   chartB->removeAllSeries();
-
-  const auto axes = chartB->axes();
-  for (auto *axis : axes) {
-    chartB->removeAxis(axis);
-  }
-
+  for (auto *ax : chartB->axes())
+    chartB->removeAxis(ax);
   chartB->addSeries(barSeries);
 
   QBarCategoryAxis *axisY = new QBarCategoryAxis();
-  axisY->append(categorias);
+  axisY->append(cats);
   chartB->addAxis(axisY, Qt::AlignLeft);
   barSeries->attachAxis(axisY);
 
@@ -272,35 +291,19 @@ void DashboardReconocimiento::cargarDatos(AnalizadorEsquema *analizador) {
   chartB->addAxis(axisX, Qt::AlignBottom);
   barSeries->attachAxis(axisX);
 
-  // Mostrar sugerencias OLAP
+  // Sugerencias
   QStringList hechos = stats["posibles_tablas_hechos"].toStringList();
   QStringList dims = stats["posibles_dimensiones"].toStringList();
 
-  if (hechos.isEmpty()) {
-    lblHechosSugeridos->setText(
-        "No se detectaron tablas de hechos automaticamente.\nBusque tablas con "
-        "muchas filas y varias FKs.");
-  } else {
-    lblHechosSugeridos->setText(hechos.join("\n"));
-    lblHechosSugeridos->setStyleSheet(
-        "color: #d97706; font-size: 13px; font-weight: 500;");
-  }
-
-  if (dims.isEmpty()) {
-    lblDimensionesSugeridas->setText(
-        "No se detectaron dimensiones automaticamente.\nBusque tablas "
-        "referenciadas por FKs.");
-  } else {
-    lblDimensionesSugeridas->setText(dims.join("\n"));
-    lblDimensionesSugeridas->setStyleSheet(
-        "color: #059669; font-size: 13px; font-weight: 500;");
-  }
+  lblHechosSugeridos->setText(hechos.isEmpty() ? "No detectadas"
+                                               : hechos.join(", "));
+  lblDimensionesSugeridas->setText(dims.isEmpty() ? "No detectadas"
+                                                  : dims.join(", "));
 }
 
 void DashboardReconocimiento::actualizarCardValor(QWidget *card,
                                                   const QString &valor) {
   QLabel *lbl = card->findChild<QLabel *>("valorCard");
-  if (lbl) {
+  if (lbl)
     lbl->setText(valor);
-  }
 }
