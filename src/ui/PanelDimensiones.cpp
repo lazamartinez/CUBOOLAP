@@ -16,21 +16,36 @@ void PanelDimensiones::configurarUi() {
   arbolDimensiones->setStyleSheet("QTreeWidget { background-color: #252526; "
                                   "color: #DDD; border: 1px solid #3E3E42; }");
 
-  // Datos de ejemplo
-  QTreeWidgetItem *dimTiempo = new QTreeWidgetItem(arbolDimensiones);
-  dimTiempo->setText(0, "Tiempo");
-  dimTiempo->setIcon(
-      0, QIcon::fromTheme("appointment-new")); // Icono genérico si existe
-
-  new QTreeWidgetItem(dimTiempo, QStringList() << "Año");
-  new QTreeWidgetItem(dimTiempo, QStringList() << "Trimestre");
-  new QTreeWidgetItem(dimTiempo, QStringList() << "Mes");
-
-  QTreeWidgetItem *dimGeo = new QTreeWidgetItem(arbolDimensiones);
-  dimGeo->setText(0, "Geografía");
-
-  new QTreeWidgetItem(dimGeo, QStringList() << "País");
-  new QTreeWidgetItem(dimGeo, QStringList() << "Ciudad");
-
   layout->addWidget(arbolDimensiones);
+
+  cargarDimensionesReales();
+}
+
+void PanelDimensiones::cargarDimensionesReales() {
+  arbolDimensiones->clear();
+
+  QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
+  if (!db.isOpen()) {
+    QTreeWidgetItem *err = new QTreeWidgetItem(arbolDimensiones);
+    err->setText(0, "Sin conexión a BD");
+    return;
+  }
+
+  QStringList tablas = db.tables();
+  for (const QString &tabla : tablas) {
+    if (!tabla.startsWith("pg_") &&
+        !tabla.startsWith("sql_")) { // Filtrar sistema
+      QTreeWidgetItem *itemTabla = new QTreeWidgetItem(arbolDimensiones);
+      itemTabla->setText(0, tabla);
+      itemTabla->setIcon(0, QIcon::fromTheme("folder"));
+
+      QSqlRecord record = db.record(tabla);
+      for (int i = 0; i < record.count(); i++) {
+        QTreeWidgetItem *itemCol = new QTreeWidgetItem(itemTabla);
+        itemCol->setText(0, record.fieldName(i));
+        itemCol->setToolTip(0, QString(record.value(i).typeName()));
+      }
+    }
+  }
+  arbolDimensiones->expandAll();
 }

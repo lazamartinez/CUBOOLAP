@@ -10,7 +10,6 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-
 PantallaIntroduccion::PantallaIntroduccion(QWidget *parent) : QWidget(parent) {
   configurarUi();
 }
@@ -44,9 +43,25 @@ void PantallaIntroduccion::configurarUi() {
   layout->setAlignment(Qt::AlignCenter);
 
   // --- LOGO / CUBO 3D ---
+  // --- LOGO / CUBO 3D ---
   QLabel *lblLogo = new QLabel(this);
-  QString logoPath = QDir::currentPath() + "/src/ui/assets/logo.png";
-  QPixmap logo(logoPath);
+
+  // Buscar logo en varias ubicaciones posibles
+  QStringList paths = {
+      QDir::currentPath() + "/src/ui/assets/logo.png",      // Dev mode
+      QCoreApplication::applicationDirPath() + "/logo.png", // Distributed
+      QCoreApplication::applicationDirPath() +
+          "/src/ui/assets/logo.png",                        // Inside build
+      "C:/Proyectos Facu/OLAPBD2025/src/ui/assets/logo.png" // Absolute fallback
+  };
+
+  QPixmap logo;
+  for (const QString &p : paths) {
+    if (QFile::exists(p)) {
+      logo.load(p);
+      break;
+    }
+  }
 
   if (!logo.isNull()) {
     lblLogo->setPixmap(
