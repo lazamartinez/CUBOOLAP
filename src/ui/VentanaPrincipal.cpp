@@ -1,19 +1,17 @@
 #include "VentanaPrincipal.h"
 #include "DialogoConexion.h"
 #include "Estilos.h"
+#include "PantallaIntroduccion.h"
 #include <QApplication>
 #include <QMenuBar>
 #include <QScreen>
 #include <QStatusBar>
 #include <QTimer>
 
-
 VentanaPrincipal::VentanaPrincipal(QWidget *parent)
     : QMainWindow(parent), contenedorCentral(new QStackedWidget(this)) {
   configurarInterfaz();
-
-  // Programar la aparicion del dialogo de conexion
-  QTimer::singleShot(100, this, &VentanaPrincipal::mostrarDialogoConexion);
+  mostrarIntroduccion();
 }
 
 VentanaPrincipal::~VentanaPrincipal() {}
@@ -22,39 +20,21 @@ void VentanaPrincipal::configurarInterfaz() {
   setCentralWidget(contenedorCentral);
   setWindowTitle("Cubo Vision - Sistema OLAP");
 
-  // Ventana compacta (no pantalla completa)
+  // Ventana compacta
   resize(1100, 700);
   setMinimumSize(900, 600);
 
   // Centrar en pantalla
   if (QScreen *screen = QApplication::primaryScreen()) {
-    QRect screenGeometry = screen->availableGeometry();
-    int x = (screenGeometry.width() - 1100) / 2;
-    int y = (screenGeometry.height() - 700) / 2;
-    move(x, y);
+    QRect geo = screen->availableGeometry();
+    move((geo.width() - 1100) / 2, (geo.height() - 700) / 2);
   }
 
-  // Aplicar estilos limpios y modernos
+  // Aplicar estilos globales limpios
   setStyleSheet(Estilos::obtenerEstiloGlobal());
 
-  // Barra de menu compacta
+  // Menu
   QMenuBar *menuBar = this->menuBar();
-  menuBar->setStyleSheet(R"(
-    QMenuBar {
-      background: white;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 2px 8px;
-      font-size: 12px;
-    }
-    QMenuBar::item {
-      padding: 6px 12px;
-      border-radius: 4px;
-    }
-    QMenuBar::item:selected {
-      background: #f1f5f9;
-    }
-  )");
-
   QMenu *menuArchivo = menuBar->addMenu("Archivo");
   menuArchivo->addAction("Nueva Conexion", this,
                          &VentanaPrincipal::mostrarDialogoConexion);
@@ -63,20 +43,19 @@ void VentanaPrincipal::configurarInterfaz() {
 
   QMenu *menuAyuda = menuBar->addMenu("Ayuda");
   menuAyuda->addAction("Acerca de", this, [this]() {
-    statusBar()->showMessage("Cubo Vision v1.0 - Sistema OLAP", 3000);
+    statusBar()->showMessage("Cubo Vision v1.0", 3000);
   });
 
-  // Barra de estado compacta
-  statusBar()->setStyleSheet(R"(
-    QStatusBar {
-      background: white;
-      border-top: 1px solid #e5e7eb;
-      color: #6b7280;
-      font-size: 11px;
-      padding: 4px 12px;
-    }
-  )");
-  statusBar()->showMessage("Listo");
+  statusBar()->showMessage("Bienvenido a Cubo Vision");
+}
+
+void VentanaPrincipal::mostrarIntroduccion() {
+  PantallaIntroduccion *intro = new PantallaIntroduccion(this);
+  connect(intro, &PantallaIntroduccion::iniciarSistema, this,
+          &VentanaPrincipal::mostrarDialogoConexion);
+
+  contenedorCentral->addWidget(intro);
+  contenedorCentral->setCurrentWidget(intro);
 }
 
 void VentanaPrincipal::mostrarDialogoConexion() {
@@ -90,7 +69,7 @@ void VentanaPrincipal::mostrarDialogoConexion() {
 #include "DashboardReconocimiento.h"
 
 void VentanaPrincipal::alConectarExitosa() {
-  statusBar()->showMessage("Conectado. Analizando esquema...", 0);
+  statusBar()->showMessage("Conectado. Analizando...", 0);
 
   m_analizador = new AnalizadorEsquema(this);
   connect(m_analizador, &AnalizadorEsquema::analisisCompletado, this,
@@ -108,7 +87,7 @@ void VentanaPrincipal::alConectarExitosa() {
 #include "EstudioModelado.h"
 
 void VentanaPrincipal::alAnalisisCompletado() {
-  statusBar()->showMessage("Analisis completado", 2000);
+  statusBar()->showMessage("Fase 1: Diagnostico", 0);
 
   m_dashboard = new DashboardReconocimiento(this);
   m_dashboard->cargarDatos(m_analizador);
@@ -121,7 +100,7 @@ void VentanaPrincipal::alAnalisisCompletado() {
 }
 
 void VentanaPrincipal::alConfirmarReconocimiento() {
-  statusBar()->showMessage("Fase 2: Modelado", 2000);
+  statusBar()->showMessage("Fase 2: Modelado", 0);
 
   EstudioModelado *estudio = new EstudioModelado(this);
   contenedorCentral->addWidget(estudio);
@@ -132,7 +111,7 @@ void VentanaPrincipal::alConfirmarReconocimiento() {
 }
 
 void VentanaPrincipal::alModeloConfirmado() {
-  statusBar()->showMessage("Fase 3: Carga de datos", 2000);
+  statusBar()->showMessage("Fase 3: Carga", 0);
 
   ConsolaProgreso *consola = new ConsolaProgreso(this);
   MotorCarga *motor = new MotorCarga(consola, this);
@@ -155,8 +134,8 @@ void VentanaPrincipal::alCargaFinalizada() {
 
   QWidget *containerFase4 = new QWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(containerFase4);
-  layout->setContentsMargins(8, 8, 8, 8);
-  layout->setSpacing(8);
+  layout->setContentsMargins(12, 12, 12, 12);
+  layout->setSpacing(12);
 
   VisorOlap *visor = new VisorOlap(containerFase4);
   PanelAnalisis *panel = new PanelAnalisis(containerFase4);
@@ -179,7 +158,7 @@ void VentanaPrincipal::alCargaFinalizada() {
 #include "ConstructorConsultas.h"
 
 void VentanaPrincipal::alIrAReportes() {
-  statusBar()->showMessage("Fase 5: Consultas", 2000);
+  statusBar()->showMessage("Fase 5: Consultas", 0);
 
   ConstructorConsultas *constructor = new ConstructorConsultas(this);
   contenedorCentral->addWidget(constructor);

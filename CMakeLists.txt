@@ -48,6 +48,8 @@ set(PROJECT_SOURCES
     src/ui/TablaDinamica.h
     src/core/GeneradorReportes.cpp
     src/core/GeneradorReportes.h
+    src/ui/PantallaIntroduccion.cpp
+    src/ui/PantallaIntroduccion.h
 )
 
 add_executable(CuboVision

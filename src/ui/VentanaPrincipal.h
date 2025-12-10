@@ -28,6 +28,7 @@ private slots:
 
 private:
   void configurarInterfaz();
+  void mostrarIntroduccion();
 
   QStackedWidget *contenedorCentral;
   DashboardReconocimiento *m_dashboard;
