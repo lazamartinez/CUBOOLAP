@@ -174,13 +174,13 @@ El sistema permite importar archivos SQL para poblar la base de datos:
 
 El archivo `db/semilla_completa.sql` genera:
 
-| Tabla | Registros | Descripcion |
-|-------|-----------|-------------|
-| dim_tiempo | 2,192 | Fechas 2020-2025 |
-| dim_geografia | 463 | Ciudades de Latinoamerica |
-| dim_producto | 936 | Productos con categorias |
-| dim_cliente | 5,000 | Clientes segmentados |
-| fact_ventas | 100,000 | Transacciones de venta |
+| Tabla         | Registros | Descripcion               |
+| ------------- | --------- | ------------------------- |
+| dim_tiempo    | 2,192     | Fechas 2020-2025          |
+| dim_geografia | 463       | Ciudades de Latinoamerica |
+| dim_producto  | 936       | Productos con categorias  |
+| dim_cliente   | 5,000     | Clientes segmentados      |
+| fact_ventas   | 100,000   | Transacciones de venta    |
 
 ## Configuracion
 
@@ -207,7 +207,7 @@ Driver=QPSQL
 
 ## Licencia
 
-Este proyecto es de uso academico. Desarrollado para la materia Base de Datos 2025.
+Este proyecto es de uso academico. Desarrollado para la cátedra Base de Datos. Universidad Nacional de Misiones (UNAM), Facultad de Ciencias Exactas, Química y Naturales. Módulo de Apóstoles.
 
 ## Autor
 

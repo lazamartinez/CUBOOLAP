@@ -3,7 +3,10 @@
 
 **Version:** 1.0  
 **Fecha:** Diciembre 2025  
-**Materia:** Base de Datos 2025
+**Materia:** Base de Datos
+**Docente:** PAUTSCH JESUS GERMAN ANDRES  
+**Alumno:** MARTINEZ LÁZARO EZEQUIEL
+**Apuntes para mesa:** 11/12/2025
 
 ---
 
@@ -102,14 +105,14 @@ El sistema fue disenado para transformar bases de datos relacionales tradicional
 
 ## 2.1 Tecnologias Utilizadas
 
-| Componente | Tecnologia | Justificacion |
-|------------|------------|---------------|
-| Lenguaje | C++20 | Alto rendimiento, control de memoria, ideal para graficos |
-| Framework UI | Qt 6.5 | Multiplataforma, widgets nativos, excelente soporte para graficos 2D |
-| Base de Datos | PostgreSQL | Robusto, escalable, excelente soporte SQL:1999 |
-| Graficos | QPainter | Renderizado 2D eficiente sin dependencias externas |
-| Visualizacion | QtCharts | Graficos estadisticos integrados con Qt |
-| Build System | CMake | Estandar de la industria, multiplataforma |
+| Componente    | Tecnologia | Justificacion                                                        |
+| ------------- | ---------- | -------------------------------------------------------------------- |
+| Lenguaje      | C++20      | Alto rendimiento, control de memoria, ideal para graficos            |
+| Framework UI  | Qt 6.5     | Multiplataforma, widgets nativos, excelente soporte para graficos 2D |
+| Base de Datos | PostgreSQL | Robusto, escalable, excelente soporte SQL:1999                       |
+| Graficos      | QPainter   | Renderizado 2D eficiente sin dependencias externas                   |
+| Visualizacion | QtCharts   | Graficos estadisticos integrados con Qt                              |
+| Build System  | CMake      | Estandar de la industria, multiplataforma                            |
 
 ## 2.2 Arquitectura en Capas
 
@@ -638,11 +641,11 @@ flowchart TD
 
 ## 5.2 Atajos de Teclado
 
-| Tecla | Funcion |
-|-------|---------|
-| R | Resetear vista a posicion inicial |
-| Esc | Limpiar todas las selecciones |
-| G | Alternar visibilidad del grid |
+| Tecla | Funcion                           |
+| ----- | --------------------------------- |
+| R     | Resetear vista a posicion inicial |
+| Esc   | Limpiar todas las selecciones     |
+| G     | Alternar visibilidad del grid     |
 
 ---
 
@@ -796,17 +799,17 @@ erDiagram
 
 ## B. Glosario
 
-| Termino | Definicion |
-|---------|------------|
-| OLAP | Online Analytical Processing - procesamiento analitico en linea |
-| Cubo | Estructura multidimensional para analisis de datos |
-| Dimension | Eje de analisis (tiempo, geografia, producto) |
-| Medida | Valor numerico a analizar (ventas, cantidad) |
-| Drill-down | Navegacion hacia nivel de detalle inferior |
-| Drill-up | Navegacion hacia nivel de agregacion superior |
-| Celda | Interseccion de dimensiones con valor de medida |
-| Slice | Corte del cubo por una dimension |
-| Dice | Seleccion de un subcubo |
+| Termino    | Definicion                                                      |
+| ---------- | --------------------------------------------------------------- |
+| OLAP       | Online Analytical Processing - procesamiento analitico en linea |
+| Cubo       | Estructura multidimensional para analisis de datos              |
+| Dimension  | Eje de analisis (tiempo, geografia, producto)                   |
+| Medida     | Valor numerico a analizar (ventas, cantidad)                    |
+| Drill-down | Navegacion hacia nivel de detalle inferior                      |
+| Drill-up   | Navegacion hacia nivel de agregacion superior                   |
+| Celda      | Interseccion de dimensiones con valor de medida                 |
+| Slice      | Corte del cubo por una dimension                                |
+| Dice       | Seleccion de un subcubo                                         |
 
 ## C. Creditos
 
