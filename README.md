@@ -9,7 +9,7 @@ Sistema de análisis OLAP (Online Analytical Processing) con visualización 2.5D
 
 ---
 
-## 📸 Capturas de Pantalla
+## Capturas de Pantalla
 
 ### Pantalla de Inicio y Conexión
 ![Pantalla de Inicio](docs/screenshots/00_inicio.png)
@@ -26,40 +26,43 @@ Sistema de análisis OLAP (Online Analytical Processing) con visualización 2.5D
 ### Fase 4: Visor OLAP 3D Interactivo
 ![Fase 4 - Visor OLAP](docs/screenshots/04_fase4_visor_olap.png)
 
+### Fase 5: Constructor de Consultas Avanzado
+![Fase 5 - Constructor](docs/screenshots/05_fase5_constructor.png)
+
 ---
 
-## 🎯 Descripción
+## Descripción
 
 Cubo Vision es una plataforma integral de análisis multidimensional que transforma bases de datos PostgreSQL en experiencias interactivas de análisis visual. El sistema guía al usuario a través de un flujo inteligente en 5 fases:
 
 ### 🔄 Proceso del Sistema
 
-1. **🔍 Fase 1 - Diagnóstico Inteligente**
+1. **Fase 1 - Diagnóstico Inteligente**
    - Conexión a PostgreSQL con validación de credenciales
    - Análisis automático del esquema de base de datos
    - Detección de tablas de hechos y dimensiones
    - Visualización de distribución de datos y relaciones
    - Sugerencias automáticas de modelado OLAP
 
-2. **📐 Fase 2 - Modelado Multidimensional**
+2. **Fase 2 - Modelado Multidimensional**
    - Exploración interactiva de dimensiones disponibles
    - Definición de medidas numéricas para análisis
    - Simulación de rendimiento del cubo
    - Validación de estructura multidimensional
 
-3. **⚡ Fase 3 - Carga Optimizada**
+3. **Fase 3 - Carga Optimizada**
    - Procesamiento de datos con monitoreo en tiempo real
    - Bitácora detallada de operaciones
    - Alertas de calidad de datos
    - Estadísticas de velocidad y progreso
 
-4. **🧊 Fase 4 - Visualización 3D**
+4. **Fase 4 - Visualización 3D**
    - Exploración interactiva del cubo OLAP
    - Visualización isométrica 2.5D con QPainter
    - Panel de análisis con 8 operaciones OLAP
    - Selección de celdas y estadísticas en tiempo real
 
-5. **📊 Fase 5 - Consultas y Reportes**
+5. **Fase 5 - Consultas y Reportes**
    - Constructor visual de consultas dinámicas
    - Detección automática de dimensiones y medidas
    - Generación de SQL optimizado
@@ -67,7 +70,7 @@ Cubo Vision es una plataforma integral de análisis multidimensional que transfo
 
 ---
 
-## ✨ Características Principales
+## Características Principales
 
 ### Análisis Automático
 - ✅ Detección automática de tablas de hechos y dimensiones
@@ -100,7 +103,7 @@ Cubo Vision es una plataforma integral de análisis multidimensional que transfo
 
 ---
 
-## 🛠️ Requisitos del Sistema
+## Requisitos del Sistema
 
 ### Software Requerido
 
@@ -121,7 +124,7 @@ Qt6::Core
 
 ---
 
-## 🚀 Instalación
+## Instalación
 
 ### 1. Clonar el Repositorio
 
@@ -173,7 +176,7 @@ cmake --build . --config Release
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 CUBOOLAP/
@@ -208,7 +211,7 @@ CUBOOLAP/
 
 ---
 
-## 💡 Uso del Sistema
+## Uso del Sistema
 
 ### Conexión Inicial
 
@@ -244,7 +247,7 @@ Todas las operaciones están disponibles en el **Panel de Análisis** (derecha):
 
 ---
 
-## 📊 Datos de Prueba
+## Datos de Prueba
 
 El archivo `database/seed_bd4-2025.sql` genera:
 
@@ -260,7 +263,7 @@ El archivo `database/seed_bd4-2025.sql` genera:
 
 ---
 
-## 🔧 Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 - **Lenguaje**: C++20
 - **Framework UI**: Qt 6.5
@@ -271,7 +274,7 @@ El archivo `database/seed_bd4-2025.sql` genera:
 
 ---
 
-## 📖 Documentación Adicional
+## Documentación Adicional
 
 - [Resumen Técnico](docs/RESUMEN_TECNICO.md) - Arquitectura y detalles técnicos
 - [Manual de Usuario](docs/MANUAL_USUARIO.md) - Guía completa de uso
@@ -279,7 +282,7 @@ El archivo `database/seed_bd4-2025.sql` genera:
 
 ---
 
-## 📝 Licencia
+## Licencia
 
 Este proyecto es de uso académico.
 
@@ -290,12 +293,12 @@ Este proyecto es de uso académico.
 
 ---
 
-## 👨‍💻 Autor
+## Autor
 
 Proyecto desarrollado como trabajo práctico universitario.
 
 ---
 
-## 🤝 Contribuciones
+## Contribuciones
 
 Las contribuciones son bienvenidas. Por favor, abra un issue para discutir cambios importantes antes de enviar un pull request.

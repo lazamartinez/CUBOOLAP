@@ -1,6 +1,6 @@
 # Resumen Técnico - Cubo Vision OLAP
 
-## 📋 Índice
+## Indice
 
 1. [Descripción General](#descripción-general)
 2. [Arquitectura del Sistema](#arquitectura-del-sistema)
@@ -12,7 +12,7 @@
 
 ---
 
-## 🎯 Descripción General
+## Descripción General
 
 **Cubo Vision** es un sistema OLAP (Online Analytical Processing) educativo desarrollado en C++20 con Qt 6.5 que permite analizar datos multidimensionales almacenados en PostgreSQL mediante una interfaz visual interactiva.
 
@@ -29,7 +29,7 @@ Proporcionar una plataforma completa de análisis multidimensional que guíe al 
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ### Patrón Arquitectónico
 
@@ -84,9 +84,9 @@ El sistema utiliza una arquitectura **MVC (Model-View-Controller)** adaptada par
 
 ---
 
-## 🔄 Fases del Sistema
+## Fases del Sistema
 
-### Fase 1: Diagnóstico del Esquema 🔍
+### Fase 1: Diagnóstico del Esquema
 
 **Objetivo**: Analizar automáticamente la estructura de la base de datos conectada.
 
@@ -113,7 +113,7 @@ El sistema utiliza una arquitectura **MVC (Model-View-Controller)** adaptada par
 
 ---
 
-### Fase 2: Modelado Multidimensional 📐
+### Fase 2: Modelado Multidimensional
 
 **Objetivo**: Definir la estructura del cubo OLAP (dimensiones y medidas).
 
@@ -143,7 +143,7 @@ El sistema utiliza una arquitectura **MVC (Model-View-Controller)** adaptada par
 
 ---
 
-### Fase 3: Carga de Datos ⚡
+### Fase 3: Carga de Datos
 
 **Objetivo**: Procesar y cargar datos en memoria para análisis OLAP.
 
@@ -177,7 +177,7 @@ El sistema utiliza una arquitectura **MVC (Model-View-Controller)** adaptada par
 
 ---
 
-### Fase 4: Visor OLAP 3D 🧊
+### Fase 4: Visor OLAP 3D
 
 **Objetivo**: Explorar el cubo OLAP mediante visualización isométrica interactiva.
 
@@ -220,7 +220,7 @@ y_screen = y + (x + z) * sin(30°)
 
 ---
 
-### Fase 5: Constructor de Consultas 📊
+### Fase 5: Constructor de Consultas
 
 **Objetivo**: Permitir al usuario construir consultas SQL personalizadas de forma visual.
 
@@ -285,9 +285,9 @@ LIMIT 500
 
 ---
 
-## 🔧 Operaciones OLAP
+## Operaciones OLAP
 
-### 1. 🔍 Drill Down (Profundizar)
+### 1. Drill Down (Profundizar)
 
 **Descripción**: Navegar de un nivel agregado a un nivel más detallado en una jerarquía.
 
@@ -306,7 +306,7 @@ Año 2024 → Trimestre Q1 → Mes Enero → Día 15
 
 ---
 
-### 2. 📊 Roll Up (Resumir)
+### 2. Roll Up (Resumir)
 
 **Descripción**: Navegar de un nivel detallado a un nivel más agregado.
 
@@ -324,7 +324,7 @@ Día 15 → Mes Enero → Trimestre Q1 → Año 2024
 
 ---
 
-### 3. 🔪 Slice (Cortar)
+### 3. Slice (Cortar)
 
 **Descripción**: Filtrar el cubo por un valor específico de una dimensión.
 
@@ -343,7 +343,7 @@ Resultado: Cubo 2D (Cliente × Producto)
 
 ---
 
-### 4. 🎲 Dice (Dados)
+### 4. Dice (Dados)
 
 **Descripción**: Filtrar el cubo por múltiples valores en múltiples dimensiones.
 
@@ -362,7 +362,7 @@ Resultado: Sub-cubo con datos filtrados
 
 ---
 
-### 5. 🔄 Pivot (Rotar)
+### 5. Pivot (Rotar)
 
 **Descripción**: Rotar los ejes del cubo para cambiar la perspectiva de análisis.
 
@@ -381,7 +381,7 @@ Después: X=Tiempo, Y=Cliente, Z=Producto
 
 ---
 
-### 6. ↔️ Swap (Intercambiar)
+### 6. Swap (Intercambiar)
 
 **Descripción**: Intercambiar dos dimensiones específicas del cubo.
 
@@ -399,7 +399,7 @@ Intercambiar eje X con eje Y
 
 ---
 
-### 7. 📋 Drill Through (Ver Detalles)
+### 7. Drill Through (Ver Detalles)
 
 **Descripción**: Ver los registros individuales que componen una celda agregada.
 
@@ -418,7 +418,7 @@ Drill Through → Muestra las 50 transacciones que suman 1000
 
 ---
 
-### 8. 🏆 Ranking (Top N)
+### 8. Ranking (Top N)
 
 **Descripción**: Mostrar solo las N celdas con mayores/menores valores.
 
@@ -436,9 +436,9 @@ Top 10 productos por ventas
 
 ---
 
-## 🎭 Componentes Simulados vs Reales
+## Componentes Simulados vs Reales
 
-### ✅ Componentes Reales (Funcionales)
+### Componentes Reales (Funcionales)
 
 | Componente               | Descripción                                                           |
 | ------------------------ | --------------------------------------------------------------------- |
@@ -453,7 +453,7 @@ Top 10 productos por ventas
 | **Drag & Drop**          | Importación de archivos SQL                                           |
 | **Filtros Dinámicos**    | Detección de valores únicos desde BD                                  |
 
-### ⚠️ Componentes Simulados (Educativos)
+### Componentes Simulados (Educativos)
 
 | Componente                  | Descripción                          | Motivo                               |
 | --------------------------- | ------------------------------------ | ------------------------------------ |
@@ -463,7 +463,7 @@ Top 10 productos por ventas
 | **Caché de Cubo**           | Cubo se recalcula en cada operación  | Optimización futura                  |
 | **Exportación PDF**         | Genera estructura pero sin contenido | Requiere librería externa (QPrinter) |
 
-### 🔮 Componentes Parcialmente Simulados
+### Componentes Parcialmente Simulados
 
 | Componente       | Real                             | Simulado                         |
 | ---------------- | -------------------------------- | -------------------------------- |
@@ -473,9 +473,9 @@ Top 10 productos por ventas
 
 ---
 
-## ⚖️ Ventajas y Desventajas
+## Ventajas y Desventajas
 
-### ✅ Ventajas
+### Ventajas
 
 #### 1. **Educativo y Didáctico**
 - Flujo guiado en 5 fases fácil de entender
@@ -511,7 +511,7 @@ Top 10 productos por ventas
 - Comentarios en español
 - Fácil de extender
 
-### ❌ Desventajas
+### Desventajas
 
 #### 1. **Rendimiento Limitado**
 - No optimizado para grandes volúmenes (>1M registros)
@@ -548,7 +548,7 @@ Top 10 productos por ventas
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 ### Lenguajes y Frameworks
 
@@ -581,7 +581,7 @@ Top 10 productos por ventas
 
 ---
 
-## 📊 Estructura de Datos
+## Estructura de Datos
 
 ### Esquema Estrella
 
@@ -612,7 +612,7 @@ Top 10 productos por ventas
 
 ---
 
-## 🎓 Conclusión
+## Conclusión
 
 **Cubo Vision** es un sistema OLAP educativo completo que demuestra los conceptos fundamentales de análisis multidimensional de forma visual e interactiva. Aunque tiene limitaciones de rendimiento y escalabilidad, cumple perfectamente su objetivo didáctico de enseñar OLAP, visualización de datos y arquitectura de BI.
 
