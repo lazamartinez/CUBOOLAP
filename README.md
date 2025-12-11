@@ -163,12 +163,20 @@ El sistema permite importar archivos SQL para poblar la base de datos:
 
 ### Interaccion con el Visor OLAP
 
-- **Click en celda**: Seleccionar/deseleccionar celda
-- **Rueda del mouse**: Zoom in/out
-- **Arrastrar**: Pan del cubo
-- **Doble click**: Drill-down a nivel inferior
-- **Tecla R**: Resetear vista
-- **Tecla Esc**: Limpiar seleccion
+- **Panel de Exploracion**:
+  - **Visualizacion**: Cubo interactivo central
+  - **Panel de Analisis (Derecha)**: Contiene todas las operaciones OLAP
+    - **Drill Down/Up**: Navegacion jerarquica
+    - **Filtros**: Slice (simple) y Dice (multiple)
+    - **Transformacion**: Pivot y Swap
+    - **Detalle**: Drill Through (registros) y Ranking
+
+- **Controles**:
+  - **Click**: Seleccionar celda
+  - **Doble Click**: Drill Down instantaneo
+  - **Arrastrar**: Rotar/Panear vista
+  - **Rueda**: Zoom
+  - **Esc**: Limpiar seleccion
 
 ## Datos de Prueba
 

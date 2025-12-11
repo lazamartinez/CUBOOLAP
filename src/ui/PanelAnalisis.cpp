@@ -44,29 +44,48 @@ void PanelAnalisis::configurarUi() {
   statsLayout->addWidget(lblEstadisticas);
   layout->addWidget(grpStats);
 
-  // Acciones rapidas
-  QGroupBox *grpAcciones = new QGroupBox("Acciones", this);
-  QVBoxLayout *accLayout = new QVBoxLayout(grpAcciones);
+  // Acciones rapidas (Operaciones OLAP)
+  QGroupBox *grpAcciones = new QGroupBox("Acciones OLAP", this);
+  QGridLayout *accLayout = new QGridLayout(grpAcciones);
+  accLayout->setSpacing(8);
 
-  QPushButton *btnDrillDown = new QPushButton("Drill Down", this);
-  btnDrillDown->setStyleSheet(R"(
-    QPushButton {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      padding: 8px;
-      color: #374151;
-    }
-    QPushButton:hover {
-      background: #e5e7eb;
-      border-color: #2563eb;
-    }
-  )");
-  accLayout->addWidget(btnDrillDown);
+  // Helper lambda para crear botones
+  auto addBtn = [&](QString text, QString tip, int row, int col, auto signal) {
+    QPushButton *btn = new QPushButton(text, this);
+    btn->setToolTip(tip);
+    btn->setCursor(Qt::PointingHandCursor);
+    btn->setStyleSheet(R"(
+        QPushButton {
+          background: #f3f4f6; border: 1px solid #d1d5db;
+          border-radius: 4px; padding: 6px; color: #374151; font-weight: 500;
+        }
+        QPushButton:hover { background: #e5e7eb; border-color: #2563eb; color: #2563eb; }
+        QPushButton:pressed { background: #dbeafe; }
+      )");
+    connect(btn, &QPushButton::clicked, this, signal);
+    accLayout->addWidget(btn, row, col);
+    return btn;
+  };
 
-  QPushButton *btnExportar = new QPushButton("Exportar Seleccion", this);
-  btnExportar->setStyleSheet(btnDrillDown->styleSheet());
-  accLayout->addWidget(btnExportar);
+  addBtn("Drill Down", "Ver detalle (Profundizar)", 0, 0,
+         &PanelAnalisis::operacionDrillDown);
+  addBtn("Roll Up", "Ver general (Subir nivel)", 0, 1,
+         &PanelAnalisis::operacionRollUp);
+
+  addBtn("Slice", "Filtrar 1 dimension", 1, 0, &PanelAnalisis::operacionSlice);
+  addBtn("Dice", "Filtros multiples", 1, 1, &PanelAnalisis::operacionDice);
+
+  addBtn("Pivot", "Rotar ejes", 2, 0, &PanelAnalisis::operacionPivot);
+  addBtn("Swap", "Intercambiar dimensiones", 2, 1,
+         &PanelAnalisis::operacionSwap);
+
+  addBtn("Drill Through", "Ver registros (Detalles)", 3, 0,
+         &PanelAnalisis::operacionDrillThrough);
+  addBtn("Ranking", "Top N", 3, 1, &PanelAnalisis::operacionRanking);
+
+  QPushButton *btnReset = addBtn("Resetear Vista", "Volver al inicio", 4, 0,
+                                 &PanelAnalisis::operacionReset);
+  accLayout->addWidget(btnReset, 4, 0, 1, 2); // Span 2 columnas
 
   layout->addWidget(grpAcciones);
 

@@ -58,8 +58,6 @@ set(PROJECT_SOURCES
     src/ui/ToastNotifier.h
     src/ui/HistorialConsultas.cpp
     src/ui/HistorialConsultas.h
-    src/ui/PanelOperacionesOlap.cpp
-    src/ui/PanelOperacionesOlap.h
     src/ui/DialogoFiltros.cpp
     src/ui/DialogoFiltros.h
     src/ui/DialogoDrillThrough.cpp

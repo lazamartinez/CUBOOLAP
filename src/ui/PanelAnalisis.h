@@ -25,7 +25,18 @@ public slots:
   /// Actualiza estadisticas cuando hay multi-seleccion
   void actualizarEstadisticas(int cantidadSeleccionadas, double sumaValores);
 
+  // Senales de operaciones OLAP
 signals:
+  void operacionDrillDown();
+  void operacionRollUp();
+  void operacionSlice();
+  void operacionDice();
+  void operacionPivot();
+  void operacionSwap();
+  void operacionRanking();
+  void operacionDrillThrough();
+  void operacionReset();
+
   void irAReportes();
 
 private:

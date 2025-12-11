@@ -1433,6 +1433,9 @@ void VisorOlap::ejecutarDice(const QMap<QString, QStringList> &filtros) {
 }
 
 void VisorOlap::ejecutarPivot() {
+  if (m_metadata.nombreTablaHechos.isEmpty())
+    return;
+
   // Intercambiar dimensiones X y Z
   DimensionInfo temp = m_metadata.dimensionX;
   m_metadata.dimensionX = m_metadata.dimensionZ;
@@ -1446,6 +1449,8 @@ void VisorOlap::ejecutarPivot() {
 }
 
 void VisorOlap::ejecutarRanking(int topN, bool descendente) {
+  if (m_metadata.nombreTablaHechos.isEmpty())
+    return;
   m_topN = topN;
   m_rankingDesc = descendente;
 
@@ -1455,6 +1460,9 @@ void VisorOlap::ejecutarRanking(int topN, bool descendente) {
 }
 
 void VisorOlap::ejecutarDrillThrough() {
+  if (m_celdas.isEmpty())
+    return;
+
   // Buscar celda seleccionada
   for (const CeldaCubo &celda : m_celdas) {
     if (celda.seleccionada) {
@@ -1470,6 +1478,8 @@ void VisorOlap::ejecutarDrillThrough() {
 }
 
 void VisorOlap::resetearVista() {
+  if (m_metadata.nombreTablaHechos.isEmpty())
+    return;
   // Limpiar todo el estado OLAP
   m_historialNavegacion.clear();
   m_filtrosActivos.clear();
@@ -1518,8 +1528,12 @@ QStringList VisorOlap::obtenerValoresDimension(const QString &dimension) {
     tabla = m_metadata.dimensionZ.tabla;
     columna = m_metadata.dimensionZ.columna;
   } else {
+    // Buscar en otras dimensiones si es necesario (o retornar vacio)
     return valores;
   }
+
+  if (tabla.isEmpty() || columna.isEmpty())
+    return valores;
 
   QString sql = QString("SELECT DISTINCT %1 FROM %2 ORDER BY %1 LIMIT 100")
                     .arg(columna, tabla);
@@ -1551,4 +1565,52 @@ QStringList VisorOlap::obtenerFiltrosActivos() const {
     filtros << QString("%1: %2").arg(it.key(), it.value().join(", "));
   }
   return filtros;
+}
+
+QString VisorOlap::generarConsultaSQL(const CeldaCubo &celda, int limit) const {
+  if (m_metadata.nombreTablaHechos.isEmpty())
+    return "";
+
+  QStringList selects = {QString("f.%1").arg(m_metadata.medidaActual)};
+  QStringList joins;
+  QStringList wheres;
+
+  // Helper para procesar dimension
+  auto procesarDim = [&](const DimensionInfo &dim, const QString &valor,
+                         const QString &alias) {
+    if (dim.nombre.isEmpty())
+      return;
+
+    // Si es degenerada (esta en tabla de hechos)
+    if (dim.esDegenerada) {
+      if (!dim.columna.isEmpty()) {
+        selects << QString("f.%1 as %2").arg(dim.columna, dim.nombre);
+        wheres << QString("f.%1 = '%2'").arg(dim.columna, valor);
+      }
+    } else {
+      // Normal con JOIN
+      if (!dim.tabla.isEmpty() && !dim.columna.isEmpty()) {
+        QString aliasDim = "d_" + alias;
+        selects
+            << QString("%1.%2 as %3").arg(aliasDim, dim.columna, dim.nombre);
+        joins << QString("JOIN %1 %2 ON f.%3 = %2.%4")
+                     .arg(dim.tabla, aliasDim, dim.fkColumna, dim.pkColumna);
+        wheres << QString("%1.%2 = '%3'").arg(aliasDim, dim.columna, valor);
+      }
+    }
+  };
+
+  // Procesar dimensiones X y Z (las seleccionadas)
+  procesarDim(m_metadata.dimensionX, celda.nombreDimX, "x");
+  procesarDim(m_metadata.dimensionZ, celda.nombreDimZ, "z");
+
+  // Construir query
+  QString sql = "SELECT " + selects.join(", ") + " FROM " +
+                m_metadata.nombreTablaHechos + " f " + joins.join(" ") +
+                " WHERE " + wheres.join(" AND ");
+
+  if (limit > 0)
+    sql += QString(" LIMIT %1").arg(limit);
+
+  return sql;
 }

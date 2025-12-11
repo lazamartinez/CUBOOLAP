@@ -5,14 +5,16 @@
 #include "PantallaIntroduccion.h"
 #include "ToastNotifier.h"
 #include <QApplication>
+#include <QInputDialog>
 #include <QMenuBar>
 #include <QScreen>
 #include <QSqlDatabase>
+#include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QStatusBar>
 #include <QTimer>
 #include <QToolBar>
-
 
 VentanaPrincipal::VentanaPrincipal(QWidget *parent)
     : QMainWindow(parent), contenedorCentral(new QStackedWidget(this)) {
@@ -170,10 +172,10 @@ void VentanaPrincipal::alModeloConfirmado() {
   motor->iniciarCarga();
 }
 
+// Headers necesarios
 #include "DialogoDrillThrough.h"
 #include "DialogoFiltros.h"
 #include "PanelAnalisis.h"
-#include "PanelOperacionesOlap.h"
 #include "VisorOlap.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -185,28 +187,20 @@ void VentanaPrincipal::alCargaFinalizada() {
   statusBar()->showMessage("Fase 4: Explorador OLAP", 0);
 
   QWidget *containerFase4 = new QWidget(this);
-  QVBoxLayout *mainLayout = new QVBoxLayout(containerFase4);
-  mainLayout->setContentsMargins(0, 0, 0, 0);
-  mainLayout->setSpacing(0);
+  QHBoxLayout *mainLayout = new QHBoxLayout(containerFase4);
+  mainLayout->setContentsMargins(12, 12, 12, 12);
+  mainLayout->setSpacing(12);
 
-  // Panel de operaciones OLAP (barra superior)
-  PanelOperacionesOlap *panelOps = new PanelOperacionesOlap(containerFase4);
-  mainLayout->addWidget(panelOps);
+  // Visor (Izquierda - Centro)
+  VisorOlap *visor = new VisorOlap(containerFase4);
 
-  // Contenedor del visor y panel de analisis
-  QWidget *containerVisor = new QWidget(containerFase4);
-  QHBoxLayout *visorLayout = new QHBoxLayout(containerVisor);
-  visorLayout->setContentsMargins(12, 12, 12, 12);
-  visorLayout->setSpacing(12);
+  // Panel Analisis + Acciones (Derecha)
+  PanelAnalisis *panel = new PanelAnalisis(containerFase4);
 
-  VisorOlap *visor = new VisorOlap(containerVisor);
-  PanelAnalisis *panel = new PanelAnalisis(containerVisor);
+  mainLayout->addWidget(visor, 3);
+  mainLayout->addWidget(panel, 1);
 
-  visorLayout->addWidget(visor, 3);
-  visorLayout->addWidget(panel, 1);
-  mainLayout->addWidget(containerVisor, 1);
-
-  // Conexiones basicas
+  // === CONEXIONES BASICAS ===
   connect(panel, &PanelAnalisis::irAReportes, this,
           &VentanaPrincipal::alIrAReportes);
   connect(visor, &VisorOlap::celdaSeleccionada, panel,
@@ -214,22 +208,29 @@ void VentanaPrincipal::alCargaFinalizada() {
   connect(visor, &VisorOlap::estadisticasActualizadas, panel,
           &PanelAnalisis::actualizarEstadisticas);
 
-  // Conexiones de operaciones OLAP
-  connect(panelOps, &PanelOperacionesOlap::drillDown, visor,
-          &VisorOlap::ejecutarDrillDown);
-  connect(panelOps, &PanelOperacionesOlap::rollUp, visor,
-          &VisorOlap::ejecutarRollUp);
-  connect(panelOps, &PanelOperacionesOlap::pivot, visor,
-          &VisorOlap::ejecutarPivot);
-  connect(panelOps, &PanelOperacionesOlap::drillThrough, visor,
-          &VisorOlap::ejecutarDrillThrough);
-  connect(panelOps, &PanelOperacionesOlap::resetView, visor,
-          &VisorOlap::resetearVista);
+  // === OPERACIONES OLAP ===
 
-  // Slice: Mostrar dialogo de filtro por una dimension
-  connect(panelOps, &PanelOperacionesOlap::slice, this, [visor, this]() {
+  // 1. Drill Down
+  connect(panel, &PanelAnalisis::operacionDrillDown, visor,
+          &VisorOlap::ejecutarDrillDown);
+  connect(visor, &VisorOlap::drillDownActivado, this, [this](int, int, int) {
+    ToastNotifier::mostrar(this, "Drill Down: Detalle aplicado",
+                           ToastNotifier::Info);
+  });
+  connect(visor, &VisorOlap::nivelCambiado, this, [this](const QString &nivel) {
+    statusBar()->showMessage("Nivel actual: " + nivel);
+  });
+
+  // 2. Roll Up
+  connect(panel, &PanelAnalisis::operacionRollUp, visor,
+          &VisorOlap::ejecutarRollUp);
+  // (El feedback visual es el cambio de nivel)
+
+  // 3. Slice (Filtro simple)
+  connect(panel, &PanelAnalisis::operacionSlice, this, [visor, this]() {
     DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Slice, this);
-    dlg->setDimensionesDisponibles(visor->obtenerDimensionesDisponibles());
+    QStringList dims = visor->obtenerDimensionesDisponibles();
+    dlg->setDimensionesDisponibles(dims);
 
     connect(dlg, &DialogoFiltros::dimensionCambiada, this,
             [dlg, visor](const QString &dim) {
@@ -237,9 +238,8 @@ void VentanaPrincipal::alCargaFinalizada() {
                                        visor->obtenerValoresDimension(dim));
             });
 
-    // Cargar valores iniciales
-    if (!visor->obtenerDimensionesDisponibles().isEmpty()) {
-      QString primeraDim = visor->obtenerDimensionesDisponibles().first();
+    if (!dims.isEmpty()) {
+      QString primeraDim = dims.first();
       dlg->setValoresDimension(primeraDim,
                                visor->obtenerValoresDimension(primeraDim));
     }
@@ -247,14 +247,18 @@ void VentanaPrincipal::alCargaFinalizada() {
     if (dlg->exec() == QDialog::Accepted) {
       visor->ejecutarSlice(dlg->getDimensionSeleccionada(),
                            dlg->getValoresSeleccionados());
+      ToastNotifier::mostrar(this, "Slice aplicado correctamente",
+                             ToastNotifier::Exito);
     }
     dlg->deleteLater();
   });
 
-  // Dice: Dialogo de filtros multiples
-  connect(panelOps, &PanelOperacionesOlap::dice, this, [visor, this]() {
+  // 4. Dice (Filtros multiples)
+  connect(panel, &PanelAnalisis::operacionDice, this, [visor, this]() {
     DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Dice, this);
-    dlg->setDimensionesDisponibles(visor->obtenerDimensionesDisponibles());
+    // Configurar igual que Slice pero modo Dice
+    QStringList dims = visor->obtenerDimensionesDisponibles();
+    dlg->setDimensionesDisponibles(dims);
 
     connect(dlg, &DialogoFiltros::dimensionCambiada, this,
             [dlg, visor](const QString &dim) {
@@ -262,75 +266,109 @@ void VentanaPrincipal::alCargaFinalizada() {
                                        visor->obtenerValoresDimension(dim));
             });
 
-    if (!visor->obtenerDimensionesDisponibles().isEmpty()) {
-      QString primeraDim = visor->obtenerDimensionesDisponibles().first();
+    if (!dims.isEmpty()) {
+      QString primeraDim = dims.first();
       dlg->setValoresDimension(primeraDim,
                                visor->obtenerValoresDimension(primeraDim));
     }
 
     if (dlg->exec() == QDialog::Accepted) {
       visor->ejecutarDice(dlg->getTodosLosFiltros());
+      ToastNotifier::mostrar(this, "Dice: Sub-cubo generado",
+                             ToastNotifier::Exito);
     }
     dlg->deleteLater();
   });
 
-  // Ranking: Dialogo simple para Top N
-  connect(panelOps, &PanelOperacionesOlap::ranking, this, [visor]() {
-    visor->ejecutarRanking(10, true); // Top 10 descendente por defecto
+  // 5. Pivot
+  connect(panel, &PanelAnalisis::operacionPivot, this, [visor, this]() {
+    visor->ejecutarPivot();
+    ToastNotifier::mostrar(this, "Ejes rotados (Pivot)", ToastNotifier::Info);
   });
 
-  // Drill Through: Mostrar dialogo con registros
-  connect(
-      visor, &VisorOlap::solicitarDrillThrough, this,
-      [this, visor](const QString &dimX, const QString &dimZ, double valor) {
-        DialogoDrillThrough *dlg = new DialogoDrillThrough(this);
-        dlg->setTitulo(dimX, dimZ, valor);
+  // 6. Swap (Por ahora lo mismo que Pivot o podria ser Drag&Drop en futuro)
+  connect(panel, &PanelAnalisis::operacionSwap, this, [visor, this]() {
+    visor->ejecutarPivot();
+    ToastNotifier::mostrar(this, "Dimensiones intercambiadas",
+                           ToastNotifier::Info);
+  });
 
-        // Obtener datos de drill-through desde la BD
-        QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
-        if (db.isOpen()) {
-          QString sql =
-              QString(
-                  "SELECT t.fecha, p.nombre as producto, c.nombre as cliente, "
-                  "f.cantidad, f.total_venta, f.ganancia "
-                  "FROM fact_ventas f "
-                  "JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo "
-                  "JOIN dim_producto p ON f.id_producto = p.id_producto "
-                  "JOIN dim_cliente c ON f.id_cliente = c.id_cliente "
-                  "WHERE p.id_producto::text = '%1' OR c.id_cliente::text = "
-                  "'%2' "
-                  "ORDER BY t.fecha DESC LIMIT 100")
-                  .arg(dimX, dimZ);
+  // 7. Ranking (Top N)
+  connect(panel, &PanelAnalisis::operacionRanking, this, [visor, this]() {
+    bool ok;
+    int n = QInputDialog::getInt(
+        this, "Top N", "Cantidad de elementos a mostrar:", 10, 1, 100, 1, &ok);
+    if (ok) {
+      visor->ejecutarRanking(n, true); // true = descendente
+      ToastNotifier::mostrar(this, QString("Top %1 aplicado").arg(n),
+                             ToastNotifier::Exito);
+    }
+  });
 
-          QSqlQuery q(db);
-          if (q.exec(sql)) {
-            QStringList cols = {"Fecha",    "Producto", "Cliente",
-                                "Cantidad", "Total",    "Ganancia"};
-            QVector<QStringList> filas;
-            while (q.next()) {
-              QStringList fila;
-              for (int i = 0; i < 6; i++) {
-                fila << q.value(i).toString();
-              }
-              filas << fila;
-            }
-            dlg->cargarDatos(cols, filas);
-          }
+  // 8. Drill Through (Detalles) - SQL Generico
+  auto handleDrillThrough = [this, visor]() {
+    auto seleccion = visor->obtenerSeleccion();
+    if (seleccion.isEmpty()) {
+      ToastNotifier::mostrar(this, "Seleccione una celda primero",
+                             ToastNotifier::Advertencia);
+      return;
+    }
+
+    const CeldaCubo &celda = seleccion.first();
+    QString sql = visor->generarConsultaSQL(celda, 1000); // Limit 1000
+
+    if (sql.isEmpty()) {
+      ToastNotifier::mostrar(this, "Error generando consulta",
+                             ToastNotifier::Error);
+      return;
+    }
+
+    DialogoDrillThrough *dlg = new DialogoDrillThrough(this);
+    dlg->setTitulo(celda.nombreDimX, celda.nombreDimZ, celda.valor);
+
+    QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
+    if (db.isOpen()) {
+      QSqlQuery q(db);
+      if (q.exec(sql)) {
+        // Obtener nombres de columnas dinamicamente
+        QStringList cols;
+        QSqlRecord rec = q.record();
+        for (int i = 0; i < rec.count(); ++i)
+          cols << rec.fieldName(i);
+
+        QVector<QStringList> filas;
+        while (q.next()) {
+          QStringList fila;
+          for (int i = 0; i < rec.count(); ++i)
+            fila << q.value(i).toString();
+          filas << fila;
         }
+        dlg->cargarDatos(cols, filas);
+      } else {
+        qDebug() << "SQL Error:" << q.lastError().text();
+        ToastNotifier::mostrar(this, "Error ejecutando SQL",
+                               ToastNotifier::Error);
+      }
+    }
 
-        dlg->exec();
-        dlg->deleteLater();
-      });
+    dlg->exec();
+    dlg->deleteLater();
+  };
 
-  // Actualizar panel de operaciones cuando cambian filtros
-  connect(visor, &VisorOlap::nivelCambiado, panelOps,
-          &PanelOperacionesOlap::setNivelActual);
-  connect(visor, &VisorOlap::filtrosActualizados, panelOps,
-          &PanelOperacionesOlap::setFiltrosActivos);
+  connect(panel, &PanelAnalisis::operacionDrillThrough, this,
+          handleDrillThrough);
+  // Tambien conectar la señal directa del visor si se usa menu contextual o
+  // doble click raro
+  connect(visor, &VisorOlap::solicitarDrillThrough, this, handleDrillThrough);
+
+  // 9. Reset
+  connect(panel, &PanelAnalisis::operacionReset, this, [visor, this]() {
+    visor->resetearVista();
+    ToastNotifier::mostrar(this, "Vista reseteada", ToastNotifier::Info);
+  });
 
   contenedorCentral->addWidget(containerFase4);
   contenedorCentral->setCurrentWidget(containerFase4);
-
   visor->setFocus();
 }
 

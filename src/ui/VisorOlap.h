@@ -129,6 +129,9 @@ public slots:
   QString obtenerNivelActual() const;
   QStringList obtenerFiltrosActivos() const;
 
+  // Generador SQL dinamico
+  QString generarConsultaSQL(const CeldaCubo &celda, int limit = 100) const;
+
 signals:
   void celdaSeleccionada(const QString &info);
   void seleccionCambiada(int cantidad);
