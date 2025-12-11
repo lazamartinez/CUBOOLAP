@@ -88,13 +88,13 @@ void ConsolaProgreso::configurarUi() {
 
   txtLog = new QTextEdit(this);
   txtLog->setReadOnly(true);
-  txtLog->setMaximumHeight(150);
+  txtLog->setMinimumHeight(250);
   txtLog->setStyleSheet(R"(
     QTextEdit {
       background: #1f2937;
       color: #10b981;
       font-family: Consolas, monospace;
-      font-size: 10px;
+      font-size: 12px;
       border: none;
       border-radius: 4px;
     }
@@ -115,13 +115,13 @@ void ConsolaProgreso::configurarUi() {
 
   txtAlertas = new QTextEdit(this);
   txtAlertas->setReadOnly(true);
-  txtAlertas->setMaximumHeight(150);
+  txtAlertas->setMinimumHeight(250);
   txtAlertas->setPlaceholderText("Sin alertas");
   txtAlertas->setStyleSheet(R"(
     QTextEdit {
       background: transparent;
       color: #92400e;
-      font-size: 10px;
+      font-size: 12px;
       border: none;
     }
   )");
@@ -131,7 +131,7 @@ void ConsolaProgreso::configurarUi() {
   layout->addLayout(logsLayout);
 
   // Boton continuar
-  btnContinuar = new QPushButton("Explorar Cubo (Fase 4)", this);
+  btnContinuar = new QPushButton("🔍 Explorar Cubo (Fase 4)", this);
   btnContinuar->setMinimumHeight(36);
   btnContinuar->setCursor(Qt::PointingHandCursor);
   btnContinuar->setStyleSheet(R"(

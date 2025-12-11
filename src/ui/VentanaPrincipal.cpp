@@ -7,6 +7,7 @@
 #include <QApplication>
 #include <QInputDialog>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QScreen>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -228,56 +229,189 @@ void VentanaPrincipal::alCargaFinalizada() {
 
   // 3. Slice (Filtro simple)
   connect(panel, &PanelAnalisis::operacionSlice, this, [visor, this]() {
-    DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Slice, this);
-    QStringList dims = visor->obtenerDimensionesDisponibles();
-    dlg->setDimensionesDisponibles(dims);
+    try {
+      qDebug() << "========== OPERACION SLICE INICIADA ==========";
 
-    connect(dlg, &DialogoFiltros::dimensionCambiada, this,
-            [dlg, visor](const QString &dim) {
-              dlg->setValoresDimension(dim,
-                                       visor->obtenerValoresDimension(dim));
-            });
+      DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Slice, this);
+      qDebug() << "DialogoFiltros creado correctamente";
 
-    if (!dims.isEmpty()) {
-      QString primeraDim = dims.first();
-      dlg->setValoresDimension(primeraDim,
-                               visor->obtenerValoresDimension(primeraDim));
+      QStringList dims = visor->obtenerDimensionesDisponibles();
+      qDebug() << "Dimensiones disponibles:" << dims;
+
+      // CRÍTICO: Bloquear signals durante inicialización para evitar bucle
+      // infinito
+      dlg->blockSignals(true);
+      dlg->setDimensionesDisponibles(dims);
+
+      // Cargar valores iniciales ANTES de conectar el signal
+      if (!dims.isEmpty()) {
+        QString primeraDim = dims.first();
+        qDebug() << "Cargando valores iniciales para:" << primeraDim;
+        QStringList valores = visor->obtenerValoresDimension(primeraDim);
+        qDebug() << "Valores obtenidos:" << valores.size();
+        dlg->setValoresDimension(primeraDim, valores);
+      }
+
+      // Desbloquear signals DESPUÉS de la inicialización
+      dlg->blockSignals(false);
+
+      // AHORA conectar el signal para cambios del usuario
+      connect(
+          dlg, &DialogoFiltros::dimensionCambiada, this,
+          [dlg, visor](const QString &dim) {
+            try {
+              qDebug() << "Usuario cambio dimension a:" << dim;
+
+              // Bloquear signals temporalmente para evitar bucle
+              dlg->blockSignals(true);
+              QStringList valores = visor->obtenerValoresDimension(dim);
+              qDebug() << "Valores para dimension" << dim << ":"
+                       << valores.size() << "valores";
+              dlg->setValoresDimension(dim, valores);
+              dlg->blockSignals(false);
+            } catch (const std::exception &e) {
+              qCritical() << "ERROR en dimensionCambiada:" << e.what();
+              dlg->blockSignals(false); // Asegurar desbloqueo en caso de error
+            } catch (...) {
+              qCritical() << "ERROR DESCONOCIDO en dimensionCambiada";
+              dlg->blockSignals(false); // Asegurar desbloqueo en caso de error
+            }
+          });
+
+      qDebug() << "Mostrando dialogo...";
+      if (dlg->exec() == QDialog::Accepted) {
+        qDebug() << "Usuario acepto el dialogo";
+        QString dimSel = dlg->getDimensionSeleccionada();
+        QStringList valSel = dlg->getValoresSeleccionados();
+        qDebug() << "Dimension seleccionada:" << dimSel;
+        qDebug() << "Valores seleccionados:" << valSel;
+
+        visor->ejecutarSlice(dimSel, valSel);
+        ToastNotifier::mostrar(this, "Slice aplicado correctamente",
+                               ToastNotifier::Exito);
+        qDebug() << "Slice ejecutado exitosamente";
+      } else {
+        qDebug() << "Usuario cancelo el dialogo";
+      }
+
+      dlg->deleteLater();
+      qDebug() << "========== OPERACION SLICE FINALIZADA ==========";
+
+    } catch (const std::exception &e) {
+      qCritical() << "========== ERROR EN SLICE ==========";
+      qCritical() << "Excepcion std::exception:" << e.what();
+      qCritical() << "====================================";
+
+      QMessageBox::critical(
+          this, "Error en Operación Slice",
+          QString("Ocurrió un error al ejecutar Slice:\n\n%1\n\n"
+                  "Revisa la consola para más detalles.")
+              .arg(e.what()));
+      ToastNotifier::mostrar(this, "Error en Slice", ToastNotifier::Error);
+
+    } catch (...) {
+      qCritical() << "========== ERROR DESCONOCIDO EN SLICE ==========";
+      qCritical() << "Excepcion desconocida (no std::exception)";
+      qCritical() << "================================================";
+
+      QMessageBox::critical(
+          this, "Error en Operación Slice",
+          "Ocurrió un error desconocido al ejecutar Slice.\n\n"
+          "Revisa la consola para más detalles.");
+      ToastNotifier::mostrar(this, "Error en Slice", ToastNotifier::Error);
     }
-
-    if (dlg->exec() == QDialog::Accepted) {
-      visor->ejecutarSlice(dlg->getDimensionSeleccionada(),
-                           dlg->getValoresSeleccionados());
-      ToastNotifier::mostrar(this, "Slice aplicado correctamente",
-                             ToastNotifier::Exito);
-    }
-    dlg->deleteLater();
   });
 
   // 4. Dice (Filtros multiples)
   connect(panel, &PanelAnalisis::operacionDice, this, [visor, this]() {
-    DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Dice, this);
-    // Configurar igual que Slice pero modo Dice
-    QStringList dims = visor->obtenerDimensionesDisponibles();
-    dlg->setDimensionesDisponibles(dims);
+    try {
+      qDebug() << "========== OPERACION DICE INICIADA ==========";
 
-    connect(dlg, &DialogoFiltros::dimensionCambiada, this,
-            [dlg, visor](const QString &dim) {
-              dlg->setValoresDimension(dim,
-                                       visor->obtenerValoresDimension(dim));
-            });
+      DialogoFiltros *dlg = new DialogoFiltros(DialogoFiltros::Dice, this);
+      qDebug() << "DialogoFiltros (Dice) creado correctamente";
 
-    if (!dims.isEmpty()) {
-      QString primeraDim = dims.first();
-      dlg->setValoresDimension(primeraDim,
-                               visor->obtenerValoresDimension(primeraDim));
+      QStringList dims = visor->obtenerDimensionesDisponibles();
+      qDebug() << "Dimensiones disponibles:" << dims;
+
+      // CRÍTICO: Bloquear signals durante inicialización
+      dlg->blockSignals(true);
+      dlg->setDimensionesDisponibles(dims);
+
+      // Cargar valores iniciales ANTES de conectar el signal
+      if (!dims.isEmpty()) {
+        QString primeraDim = dims.first();
+        qDebug() << "Cargando valores iniciales para:" << primeraDim;
+        QStringList valores = visor->obtenerValoresDimension(primeraDim);
+        qDebug() << "Valores obtenidos:" << valores.size();
+        dlg->setValoresDimension(primeraDim, valores);
+      }
+
+      // Desbloquear signals DESPUÉS de la inicialización
+      dlg->blockSignals(false);
+
+      // AHORA conectar el signal para cambios del usuario
+      connect(dlg, &DialogoFiltros::dimensionCambiada, this,
+              [dlg, visor](const QString &dim) {
+                try {
+                  qDebug() << "Usuario cambio dimension a:" << dim;
+
+                  // Bloquear signals temporalmente
+                  dlg->blockSignals(true);
+                  QStringList valores = visor->obtenerValoresDimension(dim);
+                  qDebug() << "Valores para dimension" << dim << ":"
+                           << valores.size();
+                  dlg->setValoresDimension(dim, valores);
+                  dlg->blockSignals(false);
+                } catch (const std::exception &e) {
+                  qCritical()
+                      << "ERROR en dimensionCambiada (Dice):" << e.what();
+                  dlg->blockSignals(false);
+                } catch (...) {
+                  qCritical()
+                      << "ERROR DESCONOCIDO en dimensionCambiada (Dice)";
+                  dlg->blockSignals(false);
+                }
+              });
+
+      qDebug() << "Mostrando dialogo Dice...";
+      if (dlg->exec() == QDialog::Accepted) {
+        qDebug() << "Usuario acepto el dialogo Dice";
+        auto filtros = dlg->getTodosLosFiltros();
+        qDebug() << "Filtros activos:" << filtros.size();
+
+        visor->ejecutarDice(filtros);
+        ToastNotifier::mostrar(this, "Dice: Sub-cubo generado",
+                               ToastNotifier::Exito);
+        qDebug() << "Dice ejecutado exitosamente";
+      } else {
+        qDebug() << "Usuario cancelo el dialogo Dice";
+      }
+
+      dlg->deleteLater();
+      qDebug() << "========== OPERACION DICE FINALIZADA ==========";
+
+    } catch (const std::exception &e) {
+      qCritical() << "========== ERROR EN DICE ==========";
+      qCritical() << "Excepcion std::exception:" << e.what();
+      qCritical() << "====================================";
+
+      QMessageBox::critical(
+          this, "Error en Operación Dice",
+          QString("Ocurrió un error al ejecutar Dice:\n\n%1\n\n"
+                  "Revisa la consola para más detalles.")
+              .arg(e.what()));
+      ToastNotifier::mostrar(this, "Error en Dice", ToastNotifier::Error);
+
+    } catch (...) {
+      qCritical() << "========== ERROR DESCONOCIDO EN DICE ==========";
+      qCritical() << "Excepcion desconocida (no std::exception)";
+      qCritical() << "===============================================";
+
+      QMessageBox::critical(this, "Error en Operación Dice",
+                            "Ocurrió un error desconocido al ejecutar Dice.\n\n"
+                            "Revisa la consola para más detalles.");
+      ToastNotifier::mostrar(this, "Error en Dice", ToastNotifier::Error);
     }
-
-    if (dlg->exec() == QDialog::Accepted) {
-      visor->ejecutarDice(dlg->getTodosLosFiltros());
-      ToastNotifier::mostrar(this, "Dice: Sub-cubo generado",
-                             ToastNotifier::Exito);
-    }
-    dlg->deleteLater();
   });
 
   // 5. Pivot

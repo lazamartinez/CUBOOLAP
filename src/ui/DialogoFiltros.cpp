@@ -86,16 +86,27 @@ void DialogoFiltros::configurarUi() {
   // Conexiones
   connect(cmbDimension, &QComboBox::currentTextChanged, this,
           &DialogoFiltros::onDimensionCambiada);
+
+  // CORREGIDO: Usar takeItem() en lugar de delete para evitar double-free
   connect(btnAgregar, &QPushButton::clicked, this, [this]() {
-    for (auto item : lstValoresDisponibles->selectedItems()) {
-      lstValoresSeleccionados->addItem(item->text());
-      delete item;
+    QList<QListWidgetItem *> items = lstValoresDisponibles->selectedItems();
+    for (auto item : items) {
+      int row = lstValoresDisponibles->row(item);
+      QListWidgetItem *takenItem = lstValoresDisponibles->takeItem(row);
+      if (takenItem) {
+        lstValoresSeleccionados->addItem(takenItem);
+      }
     }
   });
+
   connect(btnQuitar, &QPushButton::clicked, this, [this]() {
-    for (auto item : lstValoresSeleccionados->selectedItems()) {
-      lstValoresDisponibles->addItem(item->text());
-      delete item;
+    QList<QListWidgetItem *> items = lstValoresSeleccionados->selectedItems();
+    for (auto item : items) {
+      int row = lstValoresSeleccionados->row(item);
+      QListWidgetItem *takenItem = lstValoresSeleccionados->takeItem(row);
+      if (takenItem) {
+        lstValoresDisponibles->addItem(takenItem);
+      }
     }
   });
   connect(btnAceptar, &QPushButton::clicked, this, &QDialog::accept);
@@ -105,54 +116,105 @@ void DialogoFiltros::configurarUi() {
 void DialogoFiltros::aplicarEstilos() {
   setStyleSheet(R"(
         QDialog {
-            background: #1e293b;
+            background: #ffffff;
         }
         QLabel {
-            color: #e2e8f0;
-            font-weight: 500;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 11pt;
         }
         QGroupBox {
-            color: #94a3b8;
+            color: #475569;
             font-weight: 600;
-            border: 1px solid #334155;
-            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             margin-top: 12px;
-            padding-top: 12px;
+            padding-top: 14px;
+            background: #f8fafc;
         }
         QGroupBox::title {
             subcontrol-origin: margin;
             left: 10px;
             padding: 0 8px;
+            background: #ffffff;
         }
-        QComboBox, QListWidget {
-            background: #0f172a;
-            color: #e2e8f0;
-            border: 1px solid #334155;
-            border-radius: 4px;
+        QComboBox {
+            background: #ffffff;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 10pt;
+        }
+        QComboBox:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        QComboBox:focus {
+            border-color: #3b82f6;
+        }
+        QComboBox::drop-down {
+            border: none;
+            width: 30px;
+        }
+        QComboBox::down-arrow {
+            image: none;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #3b82f6;
+            margin-right: 8px;
+        }
+        QListWidget {
+            background: #ffffff;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
             padding: 6px;
+            font-size: 10pt;
         }
-        QComboBox:hover, QListWidget:hover {
+        QListWidget:hover {
+            border-color: #3b82f6;
+        }
+        QListWidget:focus {
             border-color: #3b82f6;
         }
         QListWidget::item {
-            padding: 4px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 2px;
+            color: #1e293b;
+        }
+        QListWidget::item:hover {
+            background: #eff6ff;
+            color: #1e40af;
         }
         QListWidget::item:selected {
             background: #3b82f6;
+            color: #ffffff;
+            font-weight: 600;
         }
         QPushButton {
             background: #3b82f6;
             color: white;
             border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
+            border-radius: 6px;
+            padding: 10px 20px;
             font-weight: 600;
+            font-size: 10pt;
         }
         QPushButton:hover {
             background: #2563eb;
         }
+        QPushButton:pressed {
+            background: #1d4ed8;
+        }
         QPushButton#btnCancelar {
-            background: #475569;
+            background: #e2e8f0;
+            color: #475569;
+        }
+        QPushButton#btnCancelar:hover {
+            background: #cbd5e1;
+            color: #1e293b;
         }
     )");
 
@@ -160,24 +222,76 @@ void DialogoFiltros::aplicarEstilos() {
 }
 
 void DialogoFiltros::setDimensionesDisponibles(const QStringList &dimensiones) {
+  if (!cmbDimension) {
+    qCritical() << "ERROR: cmbDimension es NULL en setDimensionesDisponibles";
+    return;
+  }
+
+  qDebug() << "setDimensionesDisponibles:" << dimensiones;
   cmbDimension->clear();
-  cmbDimension->addItems(dimensiones);
+
+  if (!dimensiones.isEmpty()) {
+    cmbDimension->addItems(dimensiones);
+  } else {
+    qWarning() << "ADVERTENCIA: Lista de dimensiones vacía";
+  }
 }
 
 void DialogoFiltros::setValoresDimension(const QString &dimension,
                                          const QStringList &valores) {
+  if (!cmbDimension || !lstValoresDisponibles || !lstValoresSeleccionados) {
+    qCritical() << "ERROR: Widgets NULL en setValoresDimension";
+    return;
+  }
+
+  if (dimension.isEmpty()) {
+    qWarning() << "ADVERTENCIA: Dimension vacía en setValoresDimension";
+    return;
+  }
+
+  qDebug() << "setValoresDimension:" << dimension << "con" << valores.size()
+           << "valores";
+
   m_valoresPorDimension[dimension] = valores;
+
+  // Solo actualizar si es la dimensión actualmente seleccionada
   if (cmbDimension->currentText() == dimension) {
+    qDebug() << "Actualizando listas para dimension actual:" << dimension;
     onDimensionCambiada(dimension);
   }
 }
 
 void DialogoFiltros::onDimensionCambiada(const QString &dimension) {
+  if (!lstValoresDisponibles || !lstValoresSeleccionados) {
+    qCritical() << "ERROR: Listas NULL en onDimensionCambiada";
+    return;
+  }
+
+  qDebug() << "onDimensionCambiada:" << dimension;
+
+  // Limpiar listas de forma segura
   lstValoresDisponibles->clear();
   lstValoresSeleccionados->clear();
 
+  if (dimension.isEmpty()) {
+    qWarning() << "ADVERTENCIA: Dimension vacía, no hay valores para mostrar";
+    emit dimensionCambiada(dimension);
+    return;
+  }
+
   if (m_valoresPorDimension.contains(dimension)) {
-    lstValoresDisponibles->addItems(m_valoresPorDimension[dimension]);
+    QStringList valores = m_valoresPorDimension[dimension];
+    qDebug() << "Agregando" << valores.size() << "valores a la lista";
+
+    if (!valores.isEmpty()) {
+      lstValoresDisponibles->addItems(valores);
+    } else {
+      qWarning() << "ADVERTENCIA: No hay valores para la dimension"
+                 << dimension;
+    }
+  } else {
+    qWarning() << "ADVERTENCIA: Dimension" << dimension
+               << "no encontrada en m_valoresPorDimension";
   }
 
   emit dimensionCambiada(dimension);
@@ -200,11 +314,15 @@ void DialogoFiltros::onAgregarFiltro() {
 
 void DialogoFiltros::onQuitarFiltro() {
   if (lstFiltrosActivos) {
-    auto items = lstFiltrosActivos->selectedItems();
+    QList<QListWidgetItem *> items = lstFiltrosActivos->selectedItems();
     for (auto item : items) {
       QString dim = item->text().split(":").first().trimmed();
       m_filtrosActivos.remove(dim);
-      delete item;
+      // CORREGIDO: Usar takeItem() y luego delete para evitar double-free
+      int row = lstFiltrosActivos->row(item);
+      QListWidgetItem *takenItem = lstFiltrosActivos->takeItem(row);
+      delete takenItem; // Ahora sí podemos eliminar porque ya no pertenece a la
+                        // lista
     }
   }
 }

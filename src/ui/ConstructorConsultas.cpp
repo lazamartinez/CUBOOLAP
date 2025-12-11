@@ -7,12 +7,13 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QRegularExpression>
+#include <QSet>
 #include <QSplitter>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QTextStream>
-
 
 ConstructorConsultas::ConstructorConsultas(QWidget *parent) : QWidget(parent) {
   configurarUi();
@@ -58,9 +59,10 @@ void ConstructorConsultas::configurarUi() {
   QVBoxLayout *dimLayout = new QVBoxLayout();
   dimLayout->addWidget(new QLabel("Dimensiones:", this));
   listaDimensiones = new QListWidget(this);
-  // Nombres mapeados a la BD
-  listaDimensiones->addItems({"Tiempo (Año)", "Geografía (País)",
-                              "Producto (Categoría)", "Cliente (Tipo)"});
+
+  // Cargar dimensiones dinámicamente desde la BD
+  cargarDimensionesDisponibles();
+
   listaDimensiones->setDragEnabled(true);
   dimLayout->addWidget(listaDimensiones);
   recLayout->addLayout(dimLayout);
@@ -68,7 +70,10 @@ void ConstructorConsultas::configurarUi() {
   QVBoxLayout *medLayout = new QVBoxLayout();
   medLayout->addWidget(new QLabel("Medidas:", this));
   listaMedidas = new QListWidget(this);
-  listaMedidas->addItems({"Ventas", "Ganancia", "Cantidad"});
+
+  // Cargar medidas dinámicamente desde la BD
+  cargarMedidasDisponibles();
+
   listaMedidas->setDragEnabled(true);
   medLayout->addWidget(listaMedidas);
   recLayout->addLayout(medLayout);
@@ -168,17 +173,40 @@ void ConstructorConsultas::configurarUi() {
   resFooter->addWidget(lblInfoResultados);
   resFooter->addStretch();
 
-  btnExportCSV = new QPushButton("CSV", this);
-  btnExportCSV->setStyleSheet(Estilos::obtenerEstiloBotonExito());
-  btnExportCSV->setMaximumWidth(60);
+  btnExportCSV = new QPushButton("📊 CSV", this);
+  btnExportCSV->setStyleSheet(R"(
+    QPushButton {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    QPushButton:hover { background: #059669; }
+  )");
+  btnExportCSV->setMinimumWidth(80);
+  btnExportCSV->setCursor(Qt::PointingHandCursor);
   connect(btnExportCSV, &QPushButton::clicked, this,
           &ConstructorConsultas::exportarCSV);
   resFooter->addWidget(btnExportCSV);
 
-  btnReporte = new QPushButton("PDF", this);
-  btnReporte->setStyleSheet(
-      "background: #ef4444; color: white; border-radius: 6px; padding: 6px;");
-  btnReporte->setMaximumWidth(60);
+  btnReporte = new QPushButton("📄 PDF", this);
+  btnReporte->setStyleSheet(R"(
+    QPushButton {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    QPushButton:hover { background: #dc2626; }
+  )");
+  btnReporte->setMinimumWidth(80);
+  btnReporte->setCursor(Qt::PointingHandCursor);
   connect(btnReporte, &QPushButton::clicked, this,
           &ConstructorConsultas::generarReporte);
   resFooter->addWidget(btnReporte);
@@ -199,6 +227,70 @@ void ConstructorConsultas::configurarUi() {
   mainLayout->addWidget(mainSplitter);
 }
 
+void ConstructorConsultas::cargarDimensionesDisponibles() {
+  if (!GestorBaseDatos::instancia().estaConectado()) {
+    qWarning() << "No hay conexi\u00f3n a BD para cargar dimensiones";
+    return;
+  }
+
+  QSqlDatabase db = GestorBaseDatos::instancia().baseDatos();
+  QSqlQuery query(db);
+
+  // Detectar tablas de dimensiones (dim_*)
+  query.exec("SELECT table_name FROM information_schema.tables "
+             "WHERE table_schema = 'public' AND table_name LIKE 'dim_%' "
+             "ORDER BY table_name");
+
+  while (query.next()) {
+    QString tabla = query.value(0).toString();
+
+    // Obtener columnas descriptivas de cada dimensi\u00f3n
+    QSqlQuery colQuery(db);
+    colQuery.prepare(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name = :tabla AND column_name NOT LIKE 'id_%' "
+        "ORDER BY ordinal_position LIMIT 1");
+    colQuery.bindValue(":tabla", tabla);
+
+    if (colQuery.exec() && colQuery.next()) {
+      QString columna = colQuery.value(0).toString();
+      QString nombreDim = tabla.mid(4);      // Quitar "dim_"
+      nombreDim[0] = nombreDim[0].toUpper(); // Capitalizar
+
+      listaDimensiones->addItem(QString("%1 (%2)").arg(nombreDim, columna));
+    }
+  }
+
+  qDebug() << "Dimensiones cargadas:" << listaDimensiones->count();
+}
+
+void ConstructorConsultas::cargarMedidasDisponibles() {
+  if (!GestorBaseDatos::instancia().estaConectado()) {
+    qWarning() << "No hay conexi\u00f3n a BD para cargar medidas";
+    return;
+  }
+
+  QSqlDatabase db = GestorBaseDatos::instancia().baseDatos();
+  QSqlQuery query(db);
+
+  // Detectar columnas num\u00e9ricas de la tabla de hechos
+  query.exec(
+      "SELECT column_name FROM information_schema.columns "
+      "WHERE table_name = 'fact_ventas' "
+      "AND data_type IN ('integer', 'numeric', 'double precision', 'real') "
+      "AND column_name NOT LIKE 'id_%' "
+      "ORDER BY column_name");
+
+  while (query.next()) {
+    QString medida = query.value(0).toString();
+    // Capitalizar primera letra
+    medida[0] = medida[0].toUpper();
+    listaMedidas->addItem(medida);
+  }
+
+  qDebug() << "Medidas cargadas:" << listaMedidas->count();
+}
+
 bool ConstructorConsultas::validarConsulta() {
   if (areaMedidas->count() == 0) {
     ToastNotifier::mostrar(this, "Seleccione al menos una medida",
@@ -213,27 +305,29 @@ QString ConstructorConsultas::serializarConsulta() {
   return "Consulta Real Ejecutada";
 }
 
-// Mapeos
+// Mapeos din\u00e1micos
 QString mapearDimension(QString uiName) {
-  if (uiName.contains("Tiempo"))
-    return "t.anio";
-  if (uiName.contains("Geografía"))
-    return "g.pais";
-  if (uiName.contains("Producto"))
-    return "p.categoria";
-  if (uiName.contains("Cliente"))
-    return "c.tipo_cliente";
+  // Extraer nombre de tabla y columna del formato "Nombre (columna)"
+  QRegularExpression re("^(.+?)\\s*\\((.+?)\\)$");
+  QRegularExpressionMatch match = re.match(uiName);
+
+  if (match.hasMatch()) {
+    QString tabla = "dim_" + match.captured(1).toLower();
+    QString columna = match.captured(2);
+
+    // Obtener el alias de la tabla (primera letra)
+    QString alias = tabla.mid(4, 1); // Quitar "dim_" y tomar primera letra
+
+    return QString("%1.%2").arg(alias, columna);
+  }
+
   return "";
 }
 
 QString mapearMedida(QString uiName) {
-  if (uiName == "Ventas")
-    return "f.total_venta";
-  if (uiName == "Ganancia")
-    return "f.ganancia";
-  if (uiName == "Cantidad")
-    return "f.cantidad";
-  return "f.total_venta";
+  // Convertir a min\u00fasculas para buscar en la BD
+  QString medida = uiName.toLower();
+  return QString("f.%1").arg(medida);
 }
 
 void ConstructorConsultas::ejecutarConsulta() {
@@ -248,15 +342,11 @@ void ConstructorConsultas::ejecutarConsulta() {
   lblInfoResultados->setText("Ejecutando SQL real...");
   tablaResultados->setRowCount(0);
 
-  // Construir SQL Dinamico
+  // Construir SQL Dinámico
   QStringList selectParts;
   QStringList groupParts;
   QStringList joins;
-  joins
-      << "JOIN dim_tiempo t ON f.id_tiempo = t.id_tiempo"; // Siempre unimos
-                                                           // tiempo por defecto
-
-  bool usaGeo = false, usaProd = false, usaCli = false;
+  QSet<QString> tablasUsadas; // Para evitar JOINs duplicados
 
   // Procesar filas y columnas como dimensiones de agrupamiento
   auto procesarDim = [&](QListWidget *list) {
@@ -268,26 +358,32 @@ void ConstructorConsultas::ejecutarConsulta() {
         selectParts << campo;
         groupParts << campo;
 
-        if (dim.contains("Geografía"))
-          usaGeo = true;
-        if (dim.contains("Producto"))
-          usaProd = true;
-        if (dim.contains("Cliente"))
-          usaCli = true;
+        // Extraer nombre de tabla del campo (formato: "alias.columna")
+        QString alias = campo.split('.').first();
+
+        // Determinar nombre de tabla desde el alias
+        // El alias es la primera letra del nombre de dimensión
+        // Extraer nombre de dimensión del formato "Nombre (columna)"
+        QRegularExpression re("^(.+?)\\s*\\((.+?)\\)$");
+        QRegularExpressionMatch match = re.match(dim);
+
+        if (match.hasMatch()) {
+          QString nombreDim = match.captured(1).toLower();
+          QString tabla = "dim_" + nombreDim;
+          QString pkCol = "id_" + nombreDim;
+
+          if (!tablasUsadas.contains(tabla)) {
+            joins << QString("JOIN %1 %2 ON f.%3 = %2.%3")
+                         .arg(tabla, alias, pkCol);
+            tablasUsadas.insert(tabla);
+          }
+        }
       }
     }
   };
 
   procesarDim(areaFilas);
   procesarDim(areaColumnas);
-
-  // Joins bajo demanda
-  if (usaGeo)
-    joins << "JOIN dim_geografia g ON f.id_geografia = g.id_geografia";
-  if (usaProd)
-    joins << "JOIN dim_producto p ON f.id_producto = p.id_producto";
-  if (usaCli)
-    joins << "JOIN dim_cliente c ON f.id_cliente = c.id_cliente";
 
   // Medida
   QString medidaUI = areaMedidas->item(0)->text();

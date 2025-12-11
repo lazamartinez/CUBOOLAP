@@ -1,5 +1,4 @@
 #include "VisorOlap.h"
-#include "Estilos.h"
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -7,6 +6,7 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QToolTip>
 #include <QtMath>
 #include <algorithm>
@@ -520,7 +520,7 @@ void VisorOlap::cargarCuboReal() {
                     .arg(m_metadata.dimensionZ.pkColumna);
   }
 
-  // Filtros WHERE para Top N
+  // Filtros WHERE para Top N de dimensiones
   QStringList whereList;
   if (!m_metadata.dimensionX.valores.isEmpty()) {
     QStringList quotedKeys;
@@ -535,16 +535,67 @@ void VisorOlap::cargarCuboReal() {
     whereList << QString("%1 IN (%2)").arg(colZ, quotedKeys.join(","));
   }
 
+  // NUEVO: Aplicar filtros activos de operaciones OLAP (Slice/Dice/DrillDown)
+  for (auto it = m_filtrosActivos.begin(); it != m_filtrosActivos.end(); ++it) {
+    QString dimension = it.key();
+    QStringList valores = it.value();
+
+    if (valores.isEmpty())
+      continue;
+
+    // Determinar qué columna corresponde a esta dimensión
+    QString columnaFiltro;
+    if (dimension == m_metadata.dimensionX.nombre) {
+      columnaFiltro = colX;
+    } else if (dimension == m_metadata.dimensionZ.nombre) {
+      columnaFiltro = colZ;
+    } else {
+      // Dimensión no está en los ejes actuales, ignorar
+      qDebug() << "ADVERTENCIA: Filtro para dimensión" << dimension
+               << "no está en los ejes actuales (X:"
+               << m_metadata.dimensionX.nombre
+               << "Z:" << m_metadata.dimensionZ.nombre << ")";
+      continue;
+    }
+
+    // Agregar filtro IN
+    QStringList quotedVals;
+    for (const QString &v : valores)
+      quotedVals << "'" + v + "'";
+    whereList << QString("%1 IN (%2)").arg(columnaFiltro, quotedVals.join(","));
+
+    qDebug() << "Aplicando filtro OLAP:" << dimension << "IN" << valores;
+  }
+
   if (!whereList.isEmpty()) {
     querySql += " WHERE " + whereList.join(" AND ");
   }
 
   querySql += " GROUP BY 1, 2";
 
+  // NUEVO: Aplicar ORDER BY y LIMIT para operación Ranking
+  if (m_topN > 0) {
+    QString orden = m_rankingDesc ? "DESC" : "ASC";
+    querySql += QString(" ORDER BY 3 %1 LIMIT %2").arg(orden).arg(m_topN);
+    qDebug() << "Aplicando Ranking: Top" << m_topN << orden;
+  }
+
   // Ejecutar query
   QSqlQuery query(db);
-  if (!query.exec(querySql))
+
+  // NUEVO: Log de debug para verificar la query generada
+  qDebug() << "========== QUERY SQL GENERADA ==========";
+  qDebug() << querySql;
+  qDebug() << "========================================";
+
+  if (!query.exec(querySql)) {
+    qDebug() << "ERROR ejecutando query OLAP:";
+    qDebug() << "  SQL:" << querySql;
+    qDebug() << "  Error:" << query.lastError().text();
     return;
+  }
+
+  qDebug() << "Query ejecutada exitosamente. Procesando resultados...";
 
   // Mapear resultados
   QMap<QString, double> dataMap; // Key: "dimX|dimZ"
@@ -599,6 +650,26 @@ void VisorOlap::cargarCuboReal() {
 
   cargarDatos(nuevasCeldas);
   emit metadataCambiada(m_metadata);
+
+  // NUEVO: Log de resumen de carga
+  qDebug() << "========== CUBO CARGADO ==========";
+  qDebug() << "Tabla de hechos:" << m_metadata.nombreTablaHechos;
+  qDebug() << "Dimensión X:" << m_metadata.dimensionX.nombre << "("
+           << keysX.size() << "valores)";
+  qDebug() << "Dimensión Z:" << m_metadata.dimensionZ.nombre << "("
+           << keysZ.size() << "valores)";
+  qDebug() << "Medida:" << m_metadata.medidaActual;
+  qDebug() << "Total celdas:" << m_metadata.totalCeldas;
+  qDebug() << "Celdas con datos:" << m_metadata.celdasConDatos;
+  qDebug() << "Rango de valores:" << m_valorMin << "-" << m_valorMax;
+  qDebug() << "Filtros activos:" << m_filtrosActivos.size();
+  for (auto it = m_filtrosActivos.begin(); it != m_filtrosActivos.end(); ++it) {
+    qDebug() << "  -" << it.key() << ":" << it.value();
+  }
+  if (m_topN > 0) {
+    qDebug() << "Ranking: Top" << m_topN << (m_rankingDesc ? "DESC" : "ASC");
+  }
+  qDebug() << "==================================";
 }
 
 // ============================================================================
@@ -1515,35 +1586,64 @@ QStringList VisorOlap::obtenerDimensionesDisponibles() const {
 
 QStringList VisorOlap::obtenerValoresDimension(const QString &dimension) {
   QStringList valores;
+
+  qDebug() << "========== obtenerValoresDimension ==========";
+  qDebug() << "Dimension solicitada:" << dimension;
+
   QSqlDatabase db = QSqlDatabase::database("CuboVisionConnection");
-  if (!db.isOpen())
+  if (!db.isOpen()) {
+    qCritical() << "ERROR: Base de datos no está abierta";
     return valores;
+  }
 
   // Determinar tabla y columna
   QString tabla, columna;
   if (dimension == m_metadata.dimensionX.nombre) {
     tabla = m_metadata.dimensionX.tabla;
     columna = m_metadata.dimensionX.columna;
+    qDebug() << "Dimension X:" << tabla << "." << columna;
   } else if (dimension == m_metadata.dimensionZ.nombre) {
     tabla = m_metadata.dimensionZ.tabla;
     columna = m_metadata.dimensionZ.columna;
+    qDebug() << "Dimension Z:" << tabla << "." << columna;
   } else {
-    // Buscar en otras dimensiones si es necesario (o retornar vacio)
+    qWarning() << "ADVERTENCIA: Dimension" << dimension
+               << "no coincide con X o Z";
+    qWarning() << "  Dimension X:" << m_metadata.dimensionX.nombre;
+    qWarning() << "  Dimension Z:" << m_metadata.dimensionZ.nombre;
     return valores;
   }
 
-  if (tabla.isEmpty() || columna.isEmpty())
+  if (tabla.isEmpty() || columna.isEmpty()) {
+    qCritical() << "ERROR: Tabla o columna vacía para dimension" << dimension;
+    qCritical() << "  Tabla:" << tabla;
+    qCritical() << "  Columna:" << columna;
     return valores;
+  }
 
   QString sql = QString("SELECT DISTINCT %1 FROM %2 ORDER BY %1 LIMIT 100")
                     .arg(columna, tabla);
+
+  qDebug() << "SQL:" << sql;
+
   QSqlQuery q(db);
   if (q.exec(sql)) {
+    int count = 0;
     while (q.next()) {
-      valores << q.value(0).toString();
+      QString valor = q.value(0).toString();
+      if (!valor.isEmpty()) {
+        valores << valor;
+        count++;
+      }
     }
+    qDebug() << "Valores obtenidos:" << count;
+  } else {
+    qCritical() << "ERROR ejecutando query:";
+    qCritical() << "  SQL:" << sql;
+    qCritical() << "  Error:" << q.lastError().text();
   }
 
+  qDebug() << "============================================";
   return valores;
 }
 

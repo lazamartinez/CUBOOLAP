@@ -68,13 +68,13 @@ void DashboardReconocimiento::configurarUi() {
   QChart *chartPastel = new QChart();
   chartPastel->setTheme(QChart::ChartThemeLight);
   chartPastel->setBackgroundBrush(Qt::transparent);
-  chartPastel->legend()->setVisible(false);
+  chartPastel->legend()->setVisible(true);
+  chartPastel->legend()->setAlignment(Qt::AlignRight);
   chartPastel->setMargins(QMargins(0, 0, 0, 0));
 
   graficoPastelView = new QChartView(chartPastel);
   graficoPastelView->setRenderHint(QPainter::Antialiasing);
-  graficoPastelView->setMinimumHeight(160);
-  graficoPastelView->setMaximumHeight(180);
+  graficoPastelView->setMinimumHeight(220);
   graficoPastelView->setStyleSheet("background: transparent;");
   pieLayout->addWidget(graficoPastelView);
   chartsLayout->addWidget(pieContainer);
@@ -93,12 +93,12 @@ void DashboardReconocimiento::configurarUi() {
   QChart *chartBarras = new QChart();
   chartBarras->setTheme(QChart::ChartThemeLight);
   chartBarras->setBackgroundBrush(Qt::transparent);
-  chartBarras->setMargins(QMargins(0, 0, 0, 0));
+  chartBarras->setMargins(QMargins(5, 5, 5, 5));
+  chartBarras->legend()->setVisible(false);
 
   graficoBarrasView = new QChartView(chartBarras);
   graficoBarrasView->setRenderHint(QPainter::Antialiasing);
-  graficoBarrasView->setMinimumHeight(160);
-  graficoBarrasView->setMaximumHeight(180);
+  graficoBarrasView->setMinimumHeight(220);
   graficoBarrasView->setStyleSheet("background: transparent;");
   barLayout->addWidget(graficoBarrasView);
   chartsLayout->addWidget(barContainer);
@@ -126,7 +126,7 @@ void DashboardReconocimiento::configurarUi() {
   tablasLayout->setContentsMargins(8, 16, 8, 8);
 
   listaTablas = new QListWidget(grpTablas);
-  listaTablas->setMaximumHeight(100);
+  listaTablas->setMinimumHeight(120);
   listaTablas->setStyleSheet("font-size: 11px;");
   tablasLayout->addWidget(listaTablas);
   mainLayout->addWidget(grpTablas);
@@ -164,7 +164,7 @@ void DashboardReconocimiento::configurarUi() {
   mainLayout->addLayout(sugLayout);
 
   // Boton continuar
-  QPushButton *btnConfirmar = new QPushButton("Continuar a Fase 2", this);
+  QPushButton *btnConfirmar = new QPushButton("➡️ Continuar a Fase 2", this);
   btnConfirmar->setMinimumHeight(36);
   btnConfirmar->setCursor(Qt::PointingHandCursor);
   btnConfirmar->setStyleSheet(R"(
@@ -249,13 +249,18 @@ void DashboardReconocimiento::cargarDatos(AnalizadorEsquema *analizador) {
 
   // Graficos
   QPieSeries *pieSeries = new QPieSeries();
-  pieSeries->setHoleSize(0.5);
+  pieSeries->setHoleSize(0.4);
   int count = 0;
   for (const auto &t : tablas) {
     if (count++ >= 5)
       break;
     if (t.tamanoBytes > 0) {
-      pieSeries->append(t.nombre, t.tamanoBytes);
+      QPieSlice *slice = pieSeries->append(t.nombre, t.tamanoBytes);
+      slice->setLabelVisible(true);
+      slice->setLabelPosition(QPieSlice::LabelOutside);
+      // Mostrar nombre y porcentaje
+      slice->setLabel(QString("%1\n%2%").arg(t.nombre).arg(
+          100 * slice->percentage(), 0, 'f', 1));
     }
   }
   QChart *chartP = graficoPastelView->chart();

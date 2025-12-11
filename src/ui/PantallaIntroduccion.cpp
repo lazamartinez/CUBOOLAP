@@ -89,6 +89,19 @@ void PantallaIntroduccion::configurarUi() {
   lblSub->setAlignment(Qt::AlignCenter);
   layout->addWidget(lblSub);
 
+  // Texto académico
+  QLabel *lblAcademico =
+      new QLabel("Desarrollado para la materia de Bases de datos\n"
+                 "Universidad Nacional de Misiones\n"
+                 "Facultad de Ciencias Exactas Químicas y Naturales\n"
+                 "Módulo de Apóstoles",
+                 this);
+  lblAcademico->setStyleSheet(
+      "font-size: 12px; color: #475569; line-height: 1.6; "
+      "margin-top: 10px; margin-bottom: 20px;");
+  lblAcademico->setAlignment(Qt::AlignCenter);
+  layout->addWidget(lblAcademico);
+
   // Fases (Cards)
   QHBoxLayout *fasesLayout = new QHBoxLayout();
   fasesLayout->setSpacing(20);

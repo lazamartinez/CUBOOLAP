@@ -1,51 +1,117 @@
 # CUBO VISION - Sistema OLAP Multidimensional
 
-Sistema de analisis OLAP (Online Analytical Processing) con visualizacion 2.5D interactiva, desarrollado en C++20 con Qt 6.5 y PostgreSQL.
+Sistema de análisis OLAP (Online Analytical Processing) con visualización 2.5D interactiva, desarrollado en C++20 con Qt 6.5 y PostgreSQL.
 
-## Capturas de Pantalla
+**Desarrollado para la materia de Bases de datos**  
+**Universidad Nacional de Misiones**  
+**Facultad de Ciencias Exactas Químicas y Naturales**  
+**Módulo de Apóstoles**
 
-### Pantalla de Inicio y Conexion
+---
 
-![Pantalla de Inicio](docs/screenshots/pantalla_inicio.png)
+## 📸 Capturas de Pantalla
 
-### Visor OLAP 2.5D Interactivo
+### Pantalla de Inicio y Conexión
+![Pantalla de Inicio](docs/screenshots/00_inicio.png)
 
-![Visor OLAP](docs/screenshots/visor_olap.png)
+### Fase 1: Diagnóstico del Esquema
+![Fase 1 - Diagnóstico](docs/screenshots/01_fase1_diagnostico.png)
 
-## Descripcion
+### Fase 2: Modelado Multidimensional
+![Fase 2 - Modelado](docs/screenshots/02_fase2_modelado.png)
 
-Cubo Vision es una plataforma integral de analisis multidimensional que transforma bases de datos PostgreSQL en experiencias interactivas de analisis visual. El sistema guia al usuario a traves de un flujo inteligente en 5 fases:
+### Fase 3: Carga de Datos
+![Fase 3 - Carga](docs/screenshots/03_fase3_carga.png)
 
-1. **Diagnostico Inteligente**: Conexion y analisis automatico del esquema de base de datos
-2. **Modelado Multidimensional**: Definicion visual de dimensiones, jerarquias y medidas
-3. **Carga Optimizada**: Procesamiento paralelo con monitoreo de calidad de datos
-4. **Visualizacion 2.5D**: Exploracion interactiva del cubo OLAP con graficos isometricos
-5. **Consultas y Reportes**: Constructor visual de consultas y generacion de reportes
+### Fase 4: Visor OLAP 3D Interactivo
+![Fase 4 - Visor OLAP](docs/screenshots/04_fase4_visor_olap.png)
 
-## Caracteristicas Principales
+---
 
-- Deteccion automatica de tablas de hechos y dimensiones
-- Analisis de Foreign Keys y relaciones entre tablas
-- Visualizacion isometrica 2.5D con QPainter
-- Cubo denso interactivo con seleccion de celdas
-- Panel de analisis con estadisticas en tiempo real
-- Graficos interactivos con QtCharts
-- Importacion de archivos SQL para poblar la base de datos
-- Interfaz moderna con efecto glassmorphism
-- Soporte completo para PostgreSQL
+## 🎯 Descripción
 
-## Requisitos del Sistema
+Cubo Vision es una plataforma integral de análisis multidimensional que transforma bases de datos PostgreSQL en experiencias interactivas de análisis visual. El sistema guía al usuario a través de un flujo inteligente en 5 fases:
+
+### 🔄 Proceso del Sistema
+
+1. **🔍 Fase 1 - Diagnóstico Inteligente**
+   - Conexión a PostgreSQL con validación de credenciales
+   - Análisis automático del esquema de base de datos
+   - Detección de tablas de hechos y dimensiones
+   - Visualización de distribución de datos y relaciones
+   - Sugerencias automáticas de modelado OLAP
+
+2. **📐 Fase 2 - Modelado Multidimensional**
+   - Exploración interactiva de dimensiones disponibles
+   - Definición de medidas numéricas para análisis
+   - Simulación de rendimiento del cubo
+   - Validación de estructura multidimensional
+
+3. **⚡ Fase 3 - Carga Optimizada**
+   - Procesamiento de datos con monitoreo en tiempo real
+   - Bitácora detallada de operaciones
+   - Alertas de calidad de datos
+   - Estadísticas de velocidad y progreso
+
+4. **🧊 Fase 4 - Visualización 3D**
+   - Exploración interactiva del cubo OLAP
+   - Visualización isométrica 2.5D con QPainter
+   - Panel de análisis con 8 operaciones OLAP
+   - Selección de celdas y estadísticas en tiempo real
+
+5. **📊 Fase 5 - Consultas y Reportes**
+   - Constructor visual de consultas dinámicas
+   - Detección automática de dimensiones y medidas
+   - Generación de SQL optimizado
+   - Exportación a CSV y PDF
+
+---
+
+## ✨ Características Principales
+
+### Análisis Automático
+- ✅ Detección automática de tablas de hechos y dimensiones
+- ✅ Análisis de Foreign Keys y relaciones entre tablas
+- ✅ Sugerencias inteligentes de modelado OLAP
+- ✅ Validación de estructura multidimensional
+
+### Visualización Avanzada
+- ✅ Cubo 3D isométrico interactivo con QPainter
+- ✅ Gráficos dinámicos con QtCharts (pastel, barras)
+- ✅ Panel de análisis con estadísticas en tiempo real
+- ✅ Selección de celdas y drill-down visual
+
+### Operaciones OLAP
+- ✅ **Drill Down** 🔍 - Profundizar en jerarquías
+- ✅ **Roll Up** 📊 - Subir niveles de agregación
+- ✅ **Slice** 🔪 - Filtrar por una dimensión
+- ✅ **Dice** 🎲 - Filtros múltiples
+- ✅ **Pivot** 🔄 - Rotar ejes del cubo
+- ✅ **Swap** ↔️ - Intercambiar dimensiones
+- ✅ **Drill Through** 📋 - Ver registros detallados
+- ✅ **Ranking** 🏆 - Top N clasificación
+
+### Interfaz Moderna
+- ✅ Diseño limpio con tema blanco y acentos azules
+- ✅ Emojis en botones para mejor UX
+- ✅ Toasts de notificación no intrusivos
+- ✅ Drag & drop para importar SQL
+- ✅ Responsive y optimizado
+
+---
+
+## 🛠️ Requisitos del Sistema
 
 ### Software Requerido
 
-- Qt 6.5 o superior (Widgets, Sql, Charts, Gui, Core)
-- PostgreSQL 14 o superior
-- CMake 3.16 o superior
-- Compilador C++20 compatible (MinGW 13+, MSVC 2022, GCC 11+)
+- **Qt 6.5+** (Widgets, Sql, Charts, Gui, Core)
+- **PostgreSQL 14+**
+- **CMake 3.16+**
+- **Compilador C++20** (MinGW 13+, MSVC 2022, GCC 11+)
 
 ### Dependencias de Qt
 
-```
+```cmake
 Qt6::Widgets
 Qt6::Sql
 Qt6::Charts
@@ -53,7 +119,9 @@ Qt6::Gui
 Qt6::Core
 ```
 
-## Instalacion
+---
+
+## 🚀 Instalación
 
 ### 1. Clonar el Repositorio
 
@@ -70,15 +138,18 @@ Crear la base de datos en PostgreSQL:
 CREATE DATABASE bd2025;
 ```
 
-Ejecutar la semilla de datos (opcional, para datos de prueba):
+Ejecutar la semilla de datos (opcional):
 
 ```bash
-psql -U postgres -d bd2025 -f db/semilla_completa.sql
+cd database
+ejecutar_semilla.bat  # Windows
+# o
+./ejecutar_semilla.sh  # Linux/macOS
 ```
 
 ### 3. Compilar el Proyecto
 
-#### Windows (con Qt instalado)
+#### Windows (Automático)
 
 ```batch
 iniciar.bat
@@ -100,127 +171,131 @@ cmake --build . --config Release
 ./CuboVision
 ```
 
-## Estructura del Proyecto
+---
+
+## 📁 Estructura del Proyecto
 
 ```
 CUBOOLAP/
-├── CMakeLists.txt          # Configuracion de CMake
-├── iniciar.bat             # Script de compilacion Windows
-├── iniciar.sh              # Script de compilacion Linux/macOS
-├── config/
-│   └── db_config.ini       # Configuracion de conexion
-├── db/
-│   ├── semilla.sql         # Datos basicos de prueba
-│   └── semilla_completa.sql # Datos completos (100K+ registros)
+├── CMakeLists.txt              # Configuración CMake
+├── iniciar.bat/sh              # Scripts de compilación
+├── database/
+│   ├── seed_bd4-2025.sql       # Datos de prueba (100K+ registros)
+│   ├── ejecutar_semilla.bat    # Script de carga
+│   └── README_BD4-2025.md      # Documentación de datos
 ├── docs/
-│   ├── screenshots/        # Capturas de pantalla
-│   └── RESUMEN_TECNICO.md  # Documentacion tecnica
+│   ├── screenshots/            # Capturas de pantalla
+│   ├── RESUMEN_TECNICO.md      # Documentación técnica
+│   └── MANUAL_USUARIO.md       # Manual de usuario
 └── src/
     ├── main.cpp
-    ├── core/               # Logica de negocio
-    │   ├── AnalizadorEsquema.cpp/h
-    │   ├── GestorBaseDatos.cpp/h
-    │   ├── GeneradorReportes.cpp/h
-    │   └── MotorCarga.cpp/h
-    └── ui/                 # Interfaz de usuario
-        ├── VentanaPrincipal.cpp/h
-        ├── DialogoConexion.cpp/h
-        ├── DashboardReconocimiento.cpp/h
-        ├── EstudioModelado.cpp/h
-        ├── VisorOlap.cpp/h
-        ├── PanelAnalisis.cpp/h
-        ├── ConstructorConsultas.cpp/h
-        └── Estilos.h
+    ├── core/                   # Lógica de negocio
+    │   ├── AnalizadorEsquema   # Análisis de BD
+    │   ├── GestorBaseDatos     # Conexión PostgreSQL
+    │   ├── GeneradorReportes   # Exportación
+    │   └── MotorCarga          # Procesamiento de datos
+    └── ui/                     # Interfaz de usuario
+        ├── VentanaPrincipal    # Ventana principal
+        ├── DialogoConexion     # Conexión a BD
+        ├── DashboardReconocimiento  # Fase 1
+        ├── EstudioModelado     # Fase 2
+        ├── ConsolaProgreso     # Fase 3
+        ├── VisorOlap           # Fase 4
+        ├── PanelAnalisis       # Operaciones OLAP
+        ├── ConstructorConsultas # Fase 5
+        └── Estilos             # Temas y estilos
 ```
 
-## Uso del Sistema
+---
 
-### Conexion a la Base de Datos
+## 💡 Uso del Sistema
 
-1. Inicie la aplicacion ejecutando `CuboVision.exe`
-2. Complete los campos de conexion:
-   - Host: localhost (o IP del servidor)
-   - Puerto: 5432
-   - Usuario: postgres
-   - Contrasena: (su contrasena)
-   - Base de datos: bd2025
+### Conexión Inicial
 
-### Importar Datos de Semilla
+1. Ejecutar `CuboVision.exe`
+2. Completar credenciales de PostgreSQL:
+   - **Host**: localhost
+   - **Puerto**: 5432
+   - **Usuario**: postgres
+   - **Contraseña**: (tu contraseña)
+   - **Base de Datos**: bd4-2025
 
-El sistema permite importar archivos SQL para poblar la base de datos:
+3. (Opcional) Arrastrar archivo `.sql` para importar datos
 
-1. En el Dashboard de Diagnostico, haga clic en "Importar Semilla SQL"
-2. Seleccione o arrastre el archivo .sql
-3. El sistema ejecutara el script y mostrara el progreso
+### Navegación por Fases
 
-### Navegacion por Fases
+El sistema guía automáticamente a través de las 5 fases:
 
-- **Fase 1 - Diagnostico**: Revise el diagnostico automatico del esquema
-- **Fase 2 - Modelado**: Defina dimensiones y medidas arrastrando columnas
-- **Fase 3 - Carga**: Monitoree la carga de datos en tiempo real
-- **Fase 4 - Explorador**: Explore el cubo OLAP en la visualizacion 2.5D
-- **Fase 5 - Reportes**: Construya consultas y genere reportes
+**Fase 1** → Revisar diagnóstico automático  
+**Fase 2** → Confirmar dimensiones y medidas detectadas  
+**Fase 3** → Monitorear carga de datos  
+**Fase 4** → Explorar cubo OLAP interactivo  
+**Fase 5** → Construir consultas personalizadas  
 
-### Interaccion con el Visor OLAP
+### Operaciones OLAP (Fase 4)
 
-- **Panel de Exploracion**:
-  - **Visualizacion**: Cubo interactivo central
-  - **Panel de Analisis (Derecha)**: Contiene todas las operaciones OLAP
-    - **Drill Down/Up**: Navegacion jerarquica
-    - **Filtros**: Slice (simple) y Dice (multiple)
-    - **Transformacion**: Pivot y Swap
-    - **Detalle**: Drill Through (registros) y Ranking
+Todas las operaciones están disponibles en el **Panel de Análisis** (derecha):
 
-- **Controles**:
-  - **Click**: Seleccionar celda
-  - **Doble Click**: Drill Down instantaneo
-  - **Arrastrar**: Rotar/Panear vista
-  - **Rueda**: Zoom
-  - **Esc**: Limpiar seleccion
+- **Navegación**: Drill Down, Roll Up
+- **Filtrado**: Slice, Dice
+- **Transformación**: Pivot, Swap
+- **Detalle**: Drill Through, Ranking
+- **Reset**: Volver al estado inicial
 
-## Datos de Prueba
+---
 
-El archivo `db/semilla_completa.sql` genera:
+## 📊 Datos de Prueba
 
-| Tabla         | Registros | Descripcion               |
-| ------------- | --------- | ------------------------- |
-| dim_tiempo    | 2,192     | Fechas 2020-2025          |
-| dim_geografia | 463       | Ciudades de Latinoamerica |
-| dim_producto  | 936       | Productos con categorias  |
-| dim_cliente   | 5,000     | Clientes segmentados      |
-| fact_ventas   | 100,000   | Transacciones de venta    |
+El archivo `database/seed_bd4-2025.sql` genera:
 
-## Configuracion
+| Tabla           | Registros | Descripción               |
+| --------------- | --------- | ------------------------- |
+| `dim_tiempo`    | 2,192     | Fechas 2020-2025          |
+| `dim_geografia` | 463       | Ciudades de Latinoamérica |
+| `dim_producto`  | 936       | Productos con categorías  |
+| `dim_cliente`   | 5,000     | Clientes segmentados      |
+| `fact_ventas`   | 100,000   | Transacciones de venta    |
 
-### Archivo db_config.ini
+**Total**: ~108,591 registros
 
-```ini
-[Database]
-Host=localhost
-Port=5432
-User=postgres
-Password=laza
-Database=bd2025
-Driver=QPSQL
-```
+---
 
-## Tecnologias Utilizadas
+## 🔧 Tecnologías Utilizadas
 
 - **Lenguaje**: C++20
 - **Framework UI**: Qt 6.5
-- **Base de Datos**: PostgreSQL
-- **Graficos**: QtCharts
-- **Renderizado 2.5D**: QPainter con proyeccion isometrica
+- **Base de Datos**: PostgreSQL 14+
+- **Gráficos**: QtCharts
+- **Renderizado 2.5D**: QPainter (proyección isométrica)
 - **Build System**: CMake 3.16+
 
-## Licencia
+---
 
-Este proyecto es de uso academico. Desarrollado para la cátedra Base de Datos. Universidad Nacional de Misiones (UNAM), Facultad de Ciencias Exactas, Química y Naturales. Módulo de Apóstoles.
+## 📖 Documentación Adicional
 
-## Autor
+- [Resumen Técnico](docs/RESUMEN_TECNICO.md) - Arquitectura y detalles técnicos
+- [Manual de Usuario](docs/MANUAL_USUARIO.md) - Guía completa de uso
+- [README Base de Datos](database/README_BD4-2025.md) - Estructura de datos
 
-Proyecto desarrollado como trabajo practico universitario.
+---
 
-## Contribuciones
+## 📝 Licencia
+
+Este proyecto es de uso académico.
+
+**Desarrollado para**: Bases de Datos  
+**Universidad**: Universidad Nacional de Misiones (UNAM)  
+**Facultad**: Ciencias Exactas, Químicas y Naturales  
+**Módulo**: Apóstoles
+
+---
+
+## 👨‍💻 Autor
+
+Proyecto desarrollado como trabajo práctico universitario.
+
+---
+
+## 🤝 Contribuciones
 
 Las contribuciones son bienvenidas. Por favor, abra un issue para discutir cambios importantes antes de enviar un pull request.

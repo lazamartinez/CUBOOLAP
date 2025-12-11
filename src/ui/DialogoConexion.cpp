@@ -109,18 +109,22 @@ void DialogoConexion::configurarUi() {
   comboBaseDatos->setStyleSheet(inputStyle);
   comboBaseDatos->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-  btnActualizarBD = new QPushButton("↻", this);
+  btnActualizarBD = new QPushButton("🔄", this);
   btnActualizarBD->setToolTip("Listar bases de datos disponibles");
-  btnActualizarBD->setFixedWidth(32);
+  btnActualizarBD->setFixedWidth(40);
   btnActualizarBD->setStyleSheet(R"(
     QPushButton {
       background: #f1f5f9;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       color: #3b82f6;
+      font-size: 16px;
       font-weight: bold;
     }
-    QPushButton:hover { background: #e2e8f0; }
+    QPushButton:hover {
+      background: #e2e8f0;
+      border-color: #3b82f6;
+    }
   )");
   connect(btnActualizarBD, &QPushButton::clicked, this,
           &DialogoConexion::actualizarBasesDatos);
@@ -128,7 +132,7 @@ void DialogoConexion::configurarUi() {
   bdLayout->addWidget(comboBaseDatos);
   bdLayout->addWidget(btnActualizarBD);
 
-  QLabel *lblBase = new QLabel("Base:", this);
+  QLabel *lblBase = new QLabel("Base de Datos:", this);
   lblBase->setStyleSheet(labelStyle);
   formLayout->addRow(lblBase, bdLayout);
 

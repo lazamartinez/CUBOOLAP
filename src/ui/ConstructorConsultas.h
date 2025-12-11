@@ -12,7 +12,6 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-
 /**
  * @brief Constructor visual de consultas OLAP (Fase 5) - Avanzado
  *
@@ -37,6 +36,8 @@ private slots:
 private:
   void configurarUi();
   void cargarDatosEjemplo();
+  void cargarDimensionesDisponibles();
+  void cargarMedidasDisponibles();
   bool validarConsulta();
   QString serializarConsulta();
 

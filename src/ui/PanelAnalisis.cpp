@@ -67,23 +67,24 @@ void PanelAnalisis::configurarUi() {
     return btn;
   };
 
-  addBtn("Drill Down", "Ver detalle (Profundizar)", 0, 0,
+  addBtn("🔍 Drill Down", "Ver detalle (Profundizar)", 0, 0,
          &PanelAnalisis::operacionDrillDown);
-  addBtn("Roll Up", "Ver general (Subir nivel)", 0, 1,
+  addBtn("📊 Roll Up", "Ver general (Subir nivel)", 0, 1,
          &PanelAnalisis::operacionRollUp);
 
-  addBtn("Slice", "Filtrar 1 dimension", 1, 0, &PanelAnalisis::operacionSlice);
-  addBtn("Dice", "Filtros multiples", 1, 1, &PanelAnalisis::operacionDice);
+  addBtn("🔪 Slice", "Filtrar 1 dimension", 1, 0,
+         &PanelAnalisis::operacionSlice);
+  addBtn("🎲 Dice", "Filtros multiples", 1, 1, &PanelAnalisis::operacionDice);
 
-  addBtn("Pivot", "Rotar ejes", 2, 0, &PanelAnalisis::operacionPivot);
-  addBtn("Swap", "Intercambiar dimensiones", 2, 1,
+  addBtn("🔄 Pivot", "Rotar ejes", 2, 0, &PanelAnalisis::operacionPivot);
+  addBtn("↔️ Swap", "Intercambiar dimensiones", 2, 1,
          &PanelAnalisis::operacionSwap);
 
-  addBtn("Drill Through", "Ver registros (Detalles)", 3, 0,
+  addBtn("📋 Drill Through", "Ver registros (Detalles)", 3, 0,
          &PanelAnalisis::operacionDrillThrough);
-  addBtn("Ranking", "Top N", 3, 1, &PanelAnalisis::operacionRanking);
+  addBtn("🏆 Ranking", "Top N", 3, 1, &PanelAnalisis::operacionRanking);
 
-  QPushButton *btnReset = addBtn("Resetear Vista", "Volver al inicio", 4, 0,
+  QPushButton *btnReset = addBtn("🔄 Resetear Vista", "Volver al inicio", 4, 0,
                                  &PanelAnalisis::operacionReset);
   accLayout->addWidget(btnReset, 4, 0, 1, 2); // Span 2 columnas
 
@@ -92,7 +93,7 @@ void PanelAnalisis::configurarUi() {
   layout->addStretch();
 
   // Boton principal
-  btnReportes = new QPushButton("Ir a Consultas y Reportes", this);
+  btnReportes = new QPushButton("📊 Ir a Consultas y Reportes", this);
   btnReportes->setMinimumHeight(44);
   btnReportes->setCursor(Qt::PointingHandCursor);
   btnReportes->setStyleSheet(Estilos::obtenerEstiloBotonPrimario());
