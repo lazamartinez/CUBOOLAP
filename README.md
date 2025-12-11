@@ -35,7 +35,7 @@ Sistema de análisis OLAP (Online Analytical Processing) con visualización 2.5D
 
 Cubo Vision es una plataforma integral de análisis multidimensional que transforma bases de datos PostgreSQL en experiencias interactivas de análisis visual. El sistema guía al usuario a través de un flujo inteligente en 5 fases:
 
-### 🔄 Proceso del Sistema
+### Proceso del Sistema
 
 1. **Fase 1 - Diagnóstico Inteligente**
    - Conexión a PostgreSQL con validación de credenciales
@@ -73,33 +73,33 @@ Cubo Vision es una plataforma integral de análisis multidimensional que transfo
 ## Características Principales
 
 ### Análisis Automático
-- ✅ Detección automática de tablas de hechos y dimensiones
-- ✅ Análisis de Foreign Keys y relaciones entre tablas
-- ✅ Sugerencias inteligentes de modelado OLAP
-- ✅ Validación de estructura multidimensional
+- Detección automática de tablas de hechos y dimensiones
+- Análisis de Foreign Keys y relaciones entre tablas
+- Sugerencias inteligentes de modelado OLAP
+- Validación de estructura multidimensional
 
 ### Visualización Avanzada
-- ✅ Cubo 3D isométrico interactivo con QPainter
-- ✅ Gráficos dinámicos con QtCharts (pastel, barras)
-- ✅ Panel de análisis con estadísticas en tiempo real
-- ✅ Selección de celdas y drill-down visual
+- Cubo 3D isométrico interactivo con QPainter
+- Gráficos dinámicos con QtCharts (pastel, barras)
+- Panel de análisis con estadísticas en tiempo real
+- Selección de celdas y drill-down visual
 
 ### Operaciones OLAP
-- ✅ **Drill Down** 🔍 - Profundizar en jerarquías
-- ✅ **Roll Up** 📊 - Subir niveles de agregación
-- ✅ **Slice** 🔪 - Filtrar por una dimensión
-- ✅ **Dice** 🎲 - Filtros múltiples
-- ✅ **Pivot** 🔄 - Rotar ejes del cubo
-- ✅ **Swap** ↔️ - Intercambiar dimensiones
-- ✅ **Drill Through** 📋 - Ver registros detallados
-- ✅ **Ranking** 🏆 - Top N clasificación
+- **Drill Down** - Profundizar en jerarquías
+- **Roll Up** - Subir niveles de agregación
+- **Slice** - Filtrar por una dimensión
+- **Dice** - Filtros múltiples
+- **Pivot** - Rotar ejes del cubo
+- **Swap** - Intercambiar dimensiones
+- **Drill Through** - Ver registros detallados
+- **Ranking** - Top N clasificación
 
 ### Interfaz Moderna
-- ✅ Diseño limpio con tema blanco y acentos azules
-- ✅ Emojis en botones para mejor UX
-- ✅ Toasts de notificación no intrusivos
-- ✅ Drag & drop para importar SQL
-- ✅ Responsive y optimizado
+- Diseño limpio con tema blanco y acentos azules
+- Emojis en botones para mejor UX
+- Toasts de notificación no intrusivos
+- Drag & drop para importar SQL
+- Responsive y optimizado
 
 ---
 
