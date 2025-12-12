@@ -1,12 +1,12 @@
 #ifndef ESTUDIOMODELADO_H
 #define ESTUDIOMODELADO_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QSplitter>
 #include <QVBoxLayout>
 #include <QWidget>
-
 
 class PanelDimensiones;
 class PanelMedidas;

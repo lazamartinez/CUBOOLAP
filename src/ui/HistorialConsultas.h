@@ -1,6 +1,7 @@
 #ifndef HISTORIALCONSULTAS_H
 #define HISTORIALCONSULTAS_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QDateTime>
 #include <QListWidget>
 #include <QPushButton>
@@ -8,7 +9,6 @@
 #include <QVBoxLayout>
 #include <QVector>
 #include <QWidget>
-
 
 /**
  * @brief Panel de historial de consultas ejecutadas

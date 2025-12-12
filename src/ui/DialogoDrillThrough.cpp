@@ -1,8 +1,8 @@
 #include "DialogoDrillThrough.h"
+#include "styles/FlutterTheme.h"
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QTextStream>
-
 
 DialogoDrillThrough::DialogoDrillThrough(QWidget *parent) : QDialog(parent) {
   configurarUi();
@@ -20,8 +20,6 @@ void DialogoDrillThrough::configurarUi() {
 
   // Titulo con informacion de la celda
   lblTitulo = new QLabel("Registros de la celda seleccionada", this);
-  lblTitulo->setStyleSheet(
-      "font-size: 16px; font-weight: 700; color: #e2e8f0;");
   mainLayout->addWidget(lblTitulo);
 
   // Controles
@@ -93,26 +91,32 @@ void DialogoDrillThrough::configurarUi() {
 }
 
 void DialogoDrillThrough::aplicarEstilos() {
-  setStyleSheet(R"(
+  bool dark = FlutterTheme::instance().darkMode();
+  QString bg = dark ? "#1f2937" : "#ffffff";
+  QString text = dark ? "#f3f4f6" : "#1e293b";
+  QString border = dark ? "#374151" : "#e2e8f0";
+  QString inputBg = dark ? "#111827" : "#f8fafc";
+
+  setStyleSheet(QString(R"(
         QDialog {
-            background: #1e293b;
+            background: %1;
         }
         QLabel {
-            color: #94a3b8;
+            color: %2;
         }
         QSpinBox {
-            background: #0f172a;
-            color: #e2e8f0;
-            border: 1px solid #334155;
+            background: %4;
+            color: %2;
+            border: 1px solid %3;
             border-radius: 4px;
             padding: 4px 8px;
         }
         QTableWidget {
-            background: #0f172a;
-            color: #e2e8f0;
-            border: 1px solid #334155;
+            background: %4;
+            color: %2;
+            border: 1px solid %3;
             border-radius: 6px;
-            gridline-color: #334155;
+            gridline-color: %3;
         }
         QTableWidget::item {
             padding: 6px;
@@ -121,15 +125,15 @@ void DialogoDrillThrough::aplicarEstilos() {
             background: #3b82f6;
         }
         QHeaderView::section {
-            background: #1e293b;
-            color: #94a3b8;
+            background: %1;
+            color: %2;
             font-weight: 600;
             border: none;
             border-bottom: 2px solid #3b82f6;
             padding: 8px;
         }
         QTableWidget::item:alternate {
-            background: #1e293b;
+            background: %1;
         }
         QPushButton {
             background: #3b82f6;
@@ -143,9 +147,14 @@ void DialogoDrillThrough::aplicarEstilos() {
             background: #2563eb;
         }
         QPushButton#btnCerrar {
-            background: #475569;
+            background: %3;
+            color: %2;
         }
-    )");
+    )")
+                    .arg(bg, text, border, inputBg));
+
+  lblTitulo->setStyleSheet(
+      QString("font-size: 16px; font-weight: 700; color: %1;").arg(text));
 
   btnCerrar->setObjectName("btnCerrar");
 }

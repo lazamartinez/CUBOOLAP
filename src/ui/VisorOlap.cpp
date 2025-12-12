@@ -15,6 +15,8 @@
 // CONSTRUCTOR Y DESTRUCTOR
 // ============================================================================
 
+#include "styles/FlutterTheme.h"
+
 VisorOlap::VisorOlap(QWidget *parent)
     : QWidget(parent), m_zoom(1.0f), m_panOffset(0, 0), m_arrastrando(false),
       m_celdaHover(-1), m_valorMax(1.0), m_valorMin(0.0), m_tamanoBase(25.0f),
@@ -24,8 +26,32 @@ VisorOlap::VisorOlap(QWidget *parent)
   setMouseTracking(true);
   setMinimumSize(800, 600);
 
+  // Tema inicial
+  actualizarColoresTema();
+
+  // Escuchar cambios de tema
+  connect(&FlutterTheme::instance(), &FlutterTheme::themeChanged, this,
+          &VisorOlap::actualizarColoresTema);
+
   // Cargar datos al iniciar
   cargarCuboDummy();
+}
+
+void VisorOlap::actualizarColoresTema() {
+  bool dark = FlutterTheme::instance().darkMode();
+
+  if (dark) {
+    m_config.colorFondo1 = QColor("#111827"); // Gray 900
+    m_config.colorFondo2 = QColor("#0f172a"); // Slate 900
+    m_config.colorGrid = QColor("#374151");   // Gray 700
+    m_config.opacidadGrid = 0.3f;
+  } else {
+    m_config.colorFondo1 = QColor("#f8fafc"); // Slate 50
+    m_config.colorFondo2 = QColor("#e2e8f0"); // Slate 200
+    m_config.colorGrid = QColor("#cbd5e1");   // Slate 300
+    m_config.opacidadGrid = 0.15f;
+  }
+  update();
 }
 
 VisorOlap::~VisorOlap() {}

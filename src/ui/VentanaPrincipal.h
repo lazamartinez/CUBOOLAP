@@ -1,10 +1,11 @@
 #ifndef VENTANAPRINCIPAL_H
 #define VENTANAPRINCIPAL_H
 
+#include "styles/FlutterTheme.h"
+#include "widgets/FlutterWidgets.h"
 #include <QMainWindow>
 #include <QStackedWidget>
 
-// Forward declarations
 // Forward declarations
 class DialogoConexion;
 class DashboardReconocimiento;
@@ -30,11 +31,14 @@ private:
   void configurarInterfaz();
   void mostrarIntroduccion();
   void aplicarTema();
+  void actualizarFase(int fase, const QString &titulo);
 
+  QWidget *mainContainer; // Container for AppBar + Stack
   QStackedWidget *contenedorCentral;
+  FlutterAppBar *appBar;
+
   DashboardReconocimiento *m_dashboard;
   AnalizadorEsquema *m_analizador;
-  class IndicadorFase *m_indicadorFase;
 };
 
 #endif // VENTANAPRINCIPAL_H

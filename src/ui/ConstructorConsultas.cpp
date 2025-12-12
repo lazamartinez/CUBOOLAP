@@ -1,7 +1,7 @@
 #include "ConstructorConsultas.h"
 #include "../core/GestorBaseDatos.h" // Include GestorBaseDatos
-#include "Estilos.h"
 #include "ToastNotifier.h"
+#include "styles/FlutterTheme.h"
 #include <QFileDialog>
 #include <QGroupBox>
 #include <QHeaderView>
@@ -17,11 +17,12 @@
 
 ConstructorConsultas::ConstructorConsultas(QWidget *parent) : QWidget(parent) {
   configurarUi();
+  FlutterTheme::instance().applyThemeToWidget(this);
 }
 
 void ConstructorConsultas::configurarUi() {
   QVBoxLayout *mainLayout = new QVBoxLayout(this);
-  mainLayout->setSpacing(10);
+  mainLayout->setSpacing(16);
   mainLayout->setContentsMargins(16, 16, 16, 16);
 
   // Header
@@ -29,15 +30,12 @@ void ConstructorConsultas::configurarUi() {
 
   QLabel *header =
       new QLabel("Fase 5: Constructor de Consultas Avanzado", this);
-  header->setStyleSheet(Estilos::obtenerEstiloTituloSeccion());
+  header->setStyleSheet("font-size: 20px; font-weight: 700; color: #1f2937;");
   headerLayout->addWidget(header);
   headerLayout->addStretch();
 
-  btnVolverInicio = new QPushButton("Volver al Inicio", this);
-  btnVolverInicio->setStyleSheet(R"(
-    QPushButton { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; color: #475569; }
-    QPushButton:hover { background: #e2e8f0; }
-  )");
+  btnVolverInicio = new FlutterElevatedButton("Volver al Inicio", this);
+  btnVolverInicio->setIcon(MaterialIcons::instance().arrow_back());
   connect(btnVolverInicio, &QPushButton::clicked, this,
           &ConstructorConsultas::volverAlInicio);
   headerLayout->addWidget(btnVolverInicio);
@@ -45,57 +43,94 @@ void ConstructorConsultas::configurarUi() {
   mainLayout->addLayout(headerLayout);
 
   QSplitter *mainSplitter = new QSplitter(Qt::Horizontal, this);
+  mainSplitter->setHandleWidth(1);
+  mainSplitter->setStyleSheet("QSplitter::handle { background: #e5e7eb; }");
 
   // LADO IZQUIERDO
   QWidget *leftWidget = new QWidget(this);
   QVBoxLayout *leftLayout = new QVBoxLayout(leftWidget);
-  leftLayout->setContentsMargins(0, 0, 8, 0);
-  leftLayout->setSpacing(12);
+  leftLayout->setContentsMargins(0, 0, 12, 0);
+  leftLayout->setSpacing(16);
 
   // Recursos
-  QGroupBox *grpRecursos = new QGroupBox("1. Recursos Disponibles", this);
-  QHBoxLayout *recLayout = new QHBoxLayout(grpRecursos);
+  FlutterCard *grpRecursos = new FlutterCard(this);
+  QVBoxLayout *recContainerLayout = new QVBoxLayout(grpRecursos);
+  recContainerLayout->setContentsMargins(12, 12, 12, 12);
+  recContainerLayout->setSpacing(8);
+
+  QLabel *lblRecursos = new QLabel("1. Recursos Disponibles", grpRecursos);
+  lblRecursos->setStyleSheet("font-size: 14px; font-weight: 600; "
+                             "text-transform: uppercase; color: #374151;");
+  recContainerLayout->addWidget(lblRecursos);
+
+  QHBoxLayout *recLayout = new QHBoxLayout();
+  recContainerLayout->addLayout(recLayout);
 
   QVBoxLayout *dimLayout = new QVBoxLayout();
-  dimLayout->addWidget(new QLabel("Dimensiones:", this));
+  QLabel *lblDim = new QLabel("Dimensiones:", this);
+  lblDim->setStyleSheet("font-size: 12px; font-weight: 600; color: #4b5563;");
+  dimLayout->addWidget(lblDim);
   listaDimensiones = new QListWidget(this);
-
-  // Cargar dimensiones dinámicamente desde la BD
-  cargarDimensionesDisponibles();
-
+  listaDimensiones->setStyleSheet(
+      "border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb;");
   listaDimensiones->setDragEnabled(true);
+  cargarDimensionesDisponibles();
   dimLayout->addWidget(listaDimensiones);
   recLayout->addLayout(dimLayout);
 
   QVBoxLayout *medLayout = new QVBoxLayout();
-  medLayout->addWidget(new QLabel("Medidas:", this));
+  QLabel *lblMed = new QLabel("Medidas:", this);
+  lblMed->setStyleSheet("font-size: 12px; font-weight: 600; color: #4b5563;");
+  medLayout->addWidget(lblMed);
   listaMedidas = new QListWidget(this);
-
-  // Cargar medidas dinámicamente desde la BD
-  cargarMedidasDisponibles();
-
+  listaMedidas->setStyleSheet(
+      "border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb;");
   listaMedidas->setDragEnabled(true);
+  cargarMedidasDisponibles();
   medLayout->addWidget(listaMedidas);
   recLayout->addLayout(medLayout);
 
   leftLayout->addWidget(grpRecursos);
 
   // Construccion
-  QGroupBox *grpConstruccion = new QGroupBox("2. Definicion de Consulta", this);
-  QGridLayout *buildLayout = new QGridLayout(grpConstruccion);
+  FlutterCard *grpConstruccion = new FlutterCard(this);
+  QVBoxLayout *buildContainerLayout = new QVBoxLayout(grpConstruccion);
+  buildContainerLayout->setContentsMargins(12, 12, 12, 12);
+  buildContainerLayout->setSpacing(8);
+
+  QLabel *lblCons = new QLabel("2. Definicion de Consulta", grpConstruccion);
+  lblCons->setStyleSheet("font-size: 14px; font-weight: 600; text-transform: "
+                         "uppercase; color: #374151;");
+  buildContainerLayout->addWidget(lblCons);
+
+  QGridLayout *buildLayout = new QGridLayout();
+  buildLayout->setSpacing(12);
+  buildContainerLayout->addLayout(buildLayout);
 
   buildLayout->addWidget(new QLabel("Filas:", this), 0, 0);
   areaFilas = new QListWidget(this);
   areaFilas->setAcceptDrops(true);
-  areaFilas->setMaximumHeight(60);
-  areaFilas->setStyleSheet(Estilos::obtenerEstiloDropZone());
+  areaFilas->setMaximumHeight(80);
+  areaFilas->setStyleSheet(R"(
+     QListWidget {
+        border: 2px dashed #cbd5e1;
+        border-radius: 6px;
+        background: #f8fafc;
+     }
+  )");
   buildLayout->addWidget(areaFilas, 1, 0);
 
   buildLayout->addWidget(new QLabel("Columnas:", this), 0, 1);
   areaColumnas = new QListWidget(this);
   areaColumnas->setAcceptDrops(true);
-  areaColumnas->setMaximumHeight(60);
-  areaColumnas->setStyleSheet(Estilos::obtenerEstiloDropZone());
+  areaColumnas->setMaximumHeight(80);
+  areaColumnas->setStyleSheet(R"(
+     QListWidget {
+        border: 2px dashed #cbd5e1;
+        border-radius: 6px;
+        background: #f8fafc;
+     }
+  )");
   buildLayout->addWidget(areaColumnas, 1, 1);
 
   QHBoxLayout *medHeaderLayout = new QHBoxLayout();
@@ -103,7 +138,7 @@ void ConstructorConsultas::configurarUi() {
   medHeaderLayout->addStretch();
   medHeaderLayout->addWidget(new QLabel("Agregacion:", this));
   comboAgregacion = new QComboBox(this);
-  comboAgregacion->addItems({"SUM", "AVG", "Count", "MAX", "MIN"});
+  comboAgregacion->addItems({"SUM", "AVG", "COUNT", "MAX", "MIN"});
   medHeaderLayout->addWidget(comboAgregacion);
 
   buildLayout->addLayout(medHeaderLayout, 2, 0, 1, 2);
@@ -111,14 +146,20 @@ void ConstructorConsultas::configurarUi() {
   areaMedidas = new QListWidget(this);
   areaMedidas->setAcceptDrops(true);
   areaMedidas->setMaximumHeight(60);
-  areaMedidas->setStyleSheet(Estilos::obtenerEstiloDropZone());
+  areaMedidas->setStyleSheet(R"(
+     QListWidget {
+        border: 2px dashed #2563eb;
+        border-radius: 6px;
+        background: #eff6ff;
+     }
+  )");
   buildLayout->addWidget(areaMedidas, 3, 0, 1, 2);
 
   QHBoxLayout *filtHeaderLayout = new QHBoxLayout();
   filtHeaderLayout->addWidget(new QLabel("Filtros (WHERE):", this));
   filtHeaderLayout->addStretch();
-  btnAgregarFiltro = new QPushButton("+ Filtro Manual SQL", this);
-  btnAgregarFiltro->setStyleSheet("font-size: 10px; padding: 2px 8px;");
+  btnAgregarFiltro = new FlutterElevatedButton("+ Filtro Manual SQL", this);
+  btnAgregarFiltro->setMinimumHeight(30);
   connect(btnAgregarFiltro, &QPushButton::clicked, this, [this]() {
     bool ok;
     QString text = QInputDialog::getText(
@@ -135,19 +176,19 @@ void ConstructorConsultas::configurarUi() {
   areaFiltros->setAcceptDrops(true);
   areaFiltros->setMaximumHeight(60);
   areaFiltros->setStyleSheet(
-      "background: #fdf2f8; border: 2px dashed #fbcfe8; border-radius: 8px;");
+      "background: #fff1f2; border: 2px dashed #fda4af; border-radius: 6px;");
   buildLayout->addWidget(areaFiltros, 5, 0, 1, 2);
 
   leftLayout->addWidget(grpConstruccion);
 
   QHBoxLayout *actLayout = new QHBoxLayout();
-  btnLimpiar = new QPushButton("Limpiar", this);
+  btnLimpiar = new FlutterTextButton("Limpiar", this);
   connect(btnLimpiar, &QPushButton::clicked, this,
           &ConstructorConsultas::limpiarConsulta);
   actLayout->addWidget(btnLimpiar);
   actLayout->addStretch();
-  btnEjecutar = new QPushButton(" Ejecutar (Real)", this);
-  btnEjecutar->setStyleSheet(Estilos::obtenerEstiloBotonPrimario());
+  btnEjecutar = new FlutterFilledButton(" Ejecutar (Real)", this);
+  btnEjecutar->setIcon(MaterialIcons::instance().getIcon("arrow_forward"));
   connect(btnEjecutar, &QPushButton::clicked, this,
           &ConstructorConsultas::ejecutarConsulta);
   actLayout->addWidget(btnEjecutar);
@@ -159,62 +200,50 @@ void ConstructorConsultas::configurarUi() {
   // LADO DERECHO
   QWidget *rightWidget = new QWidget(this);
   QVBoxLayout *rightLayout = new QVBoxLayout(rightWidget);
-  rightLayout->setContentsMargins(8, 0, 0, 0);
+  rightLayout->setContentsMargins(12, 0, 0, 0);
+  rightLayout->setSpacing(16);
 
-  grpRecursos = new QGroupBox("3. Resultados", this);
-  QVBoxLayout *resLayoutInner = new QVBoxLayout(grpRecursos);
+  FlutterCard *grpResultados = new FlutterCard(this);
+  QVBoxLayout *resLayoutInner = new QVBoxLayout(grpResultados);
+  resLayoutInner->setContentsMargins(12, 12, 12, 12);
+
+  QLabel *lblRes = new QLabel("3. Resultados", grpResultados);
+  lblRes->setStyleSheet("font-size: 14px; font-weight: 600; text-transform: "
+                        "uppercase; color: #374151;");
+  resLayoutInner->addWidget(lblRes);
 
   tablaResultados = new QTableWidget(this);
   tablaResultados->setAlternatingRowColors(true);
+  tablaResultados->setStyleSheet(
+      "border: 1px solid #e5e7eb; border-radius: 4px;");
   resLayoutInner->addWidget(tablaResultados);
 
   QHBoxLayout *resFooter = new QHBoxLayout();
   lblInfoResultados = new QLabel("Esperando consulta...", this);
+  lblInfoResultados->setStyleSheet("color: #6b7280; font-style: italic;");
   resFooter->addWidget(lblInfoResultados);
   resFooter->addStretch();
 
-  btnExportCSV = new QPushButton("📊 CSV", this);
-  btnExportCSV->setStyleSheet(R"(
-    QPushButton {
-      background: #10b981;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-weight: 600;
-      font-size: 11px;
-    }
-    QPushButton:hover { background: #059669; }
-  )");
-  btnExportCSV->setMinimumWidth(80);
-  btnExportCSV->setCursor(Qt::PointingHandCursor);
+  btnExportCSV = new FlutterElevatedButton("CSV", this);
+  btnExportCSV->setIcon(MaterialIcons::instance().getIcon("table_chart"));
   connect(btnExportCSV, &QPushButton::clicked, this,
           &ConstructorConsultas::exportarCSV);
   resFooter->addWidget(btnExportCSV);
 
-  btnReporte = new QPushButton("📄 PDF", this);
-  btnReporte->setStyleSheet(R"(
-    QPushButton {
-      background: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-weight: 600;
-      font-size: 11px;
-    }
-    QPushButton:hover { background: #dc2626; }
-  )");
-  btnReporte->setMinimumWidth(80);
-  btnReporte->setCursor(Qt::PointingHandCursor);
+  btnReporte = new FlutterElevatedButton("PDF", this);
+  btnReporte->setIcon(MaterialIcons::instance().getIcon("download"));
+  // Warning color override? FlutterElevatedButton uses primary color usually.
+  // We can leave it as primary or customize validly if API allows.
   connect(btnReporte, &QPushButton::clicked, this,
           &ConstructorConsultas::generarReporte);
   resFooter->addWidget(btnReporte);
 
   resLayoutInner->addLayout(resFooter);
-  rightLayout->addWidget(grpRecursos, 2);
+  rightLayout->addWidget(grpResultados, 2);
 
   panelHistorial = new HistorialConsultas(this);
+  // Assuming HistorialConsultas is also a widget we might want to wrap or
+  // style, but let's assume it's fine for now or handle it separately.
   connect(panelHistorial, &HistorialConsultas::consultaSeleccionada, this,
           &ConstructorConsultas::restaurarConsulta);
   rightLayout->addWidget(panelHistorial, 1);

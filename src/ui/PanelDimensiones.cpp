@@ -1,4 +1,5 @@
 #include "PanelDimensiones.h"
+#include "styles/FlutterTheme.h"
 
 PanelDimensiones::PanelDimensiones(QWidget *parent) : QWidget(parent) {
   configurarUi();
@@ -13,8 +14,15 @@ void PanelDimensiones::configurarUi() {
 
   arbolDimensiones = new QTreeWidget(this);
   arbolDimensiones->setHeaderLabel("Dimensiones / Niveles");
-  arbolDimensiones->setStyleSheet("QTreeWidget { background-color: #252526; "
-                                  "color: #DDD; border: 1px solid #3E3E42; }");
+
+  bool dark = FlutterTheme::instance().darkMode();
+  QString bg = dark ? "#252526" : "#ffffff";
+  QString text = dark ? "#DDD" : "#1e293b";
+  QString border = dark ? "#3E3E42" : "#e2e8f0";
+
+  arbolDimensiones->setStyleSheet(QString("QTreeWidget { background-color: %1; "
+                                          "color: %2; border: 1px solid %3; }")
+                                      .arg(bg, text, border));
 
   layout->addWidget(arbolDimensiones);
 

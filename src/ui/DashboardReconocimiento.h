@@ -1,6 +1,7 @@
 #ifndef DASHBOARDRECONOCIMIENTO_H
 #define DASHBOARDRECONOCIMIENTO_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
@@ -8,6 +9,7 @@
 #include <QtCharts/QBarSeries>
 #include <QtCharts/QChartView>
 #include <QtCharts/QPieSeries>
+
 
 class AnalizadorEsquema;
 

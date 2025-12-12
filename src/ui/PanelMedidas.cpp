@@ -1,4 +1,5 @@
 #include "PanelMedidas.h"
+#include "styles/FlutterTheme.h"
 
 PanelMedidas::PanelMedidas(QWidget *parent) : QWidget(parent) {
   configurarUi();
@@ -12,8 +13,16 @@ void PanelMedidas::configurarUi() {
   layout->addWidget(lbl);
 
   listaMedidas = new QListWidget(this);
-  listaMedidas->setStyleSheet("QListWidget { background-color: #252526; color: "
-                              "#DDD; border: 1px solid #3E3E42; }");
+
+  bool dark = FlutterTheme::instance().darkMode();
+  QString bg = dark ? "#252526" : "#ffffff";
+  QString text = dark ? "#DDD" : "#1e293b";
+  QString border = dark ? "#3E3E42" : "#e2e8f0";
+
+  listaMedidas->setStyleSheet(
+      QString("QListWidget { background-color: %1; color: "
+              "%2; border: 1px solid %3; }")
+          .arg(bg, text, border));
 
   layout->addWidget(listaMedidas);
 

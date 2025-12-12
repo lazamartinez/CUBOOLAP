@@ -1,9 +1,12 @@
 #include "PanelOperacionesOlap.h"
-#include "Estilos.h"
+#include "styles/FlutterTheme.h"
 
 PanelOperacionesOlap::PanelOperacionesOlap(QWidget *parent) : QWidget(parent) {
   configurarUi();
   aplicarEstilos();
+
+  connect(&FlutterTheme::instance(), &FlutterTheme::themeChanged, this,
+          &PanelOperacionesOlap::aplicarEstilos);
 }
 
 void PanelOperacionesOlap::configurarUi() {
@@ -83,53 +86,44 @@ void PanelOperacionesOlap::configurarUi() {
 }
 
 void PanelOperacionesOlap::aplicarEstilos() {
-  setStyleSheet(R"(
+  bool dark = FlutterTheme::instance().darkMode();
+  QString bg = dark ? "#111827" : "#ffffff";
+  QString btnBg = dark ? "#3b82f6" : "#2563eb";
+  QString btnText = "#ffffff";
+  QString border = dark ? "#374151" : "#e2e8f0";
+  QString text = dark ? "#94a3b8" : "#475569";
+
+  setStyleSheet(QString(R"(
         PanelOperacionesOlap {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #1e293b, stop:1 #0f172a);
-            border-bottom: 1px solid #334155;
+            background: %1;
+            border-bottom: 1px solid %2;
         }
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #3b82f6, stop:1 #2563eb);
-            color: white;
+            background: %3;
+            color: %4;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             padding: 6px 12px;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 12px;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #60a5fa, stop:1 #3b82f6);
-        }
-        QPushButton:pressed {
-            background: #1d4ed8;
+            background: %3; /* Slightly reliable on opacity or just same color with effect */
+            opacity: 0.9;
         }
         QPushButton#btnReset {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #64748b, stop:1 #475569);
-        }
-        QPushButton#btnReset:hover {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #94a3b8, stop:1 #64748b);
+            background: #64748b;
         }
         QPushButton#btnDrillThrough {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #10b981, stop:1 #059669);
-        }
-        QPushButton#btnDrillThrough:hover {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #34d399, stop:1 #10b981);
+            background: #10b981;
         }
         QLabel {
-            color: #94a3b8;
-            font-size: 11px;
+            color: %5;
+            font-size: 12px;
+            font-weight: 500;
         }
-    )");
-
-  btnReset->setObjectName("btnReset");
-  btnDrillThrough->setObjectName("btnDrillThrough");
+    )")
+                    .arg(bg, border, btnBg, btnText, text));
 }
 
 void PanelOperacionesOlap::setDimensiones(const QStringList &dimensiones) {

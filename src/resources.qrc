@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ui/styles/flutter_style.qss</file>
+    </qresource>
+</RCC>

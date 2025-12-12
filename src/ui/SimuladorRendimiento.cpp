@@ -1,33 +1,36 @@
 #include "SimuladorRendimiento.h"
-#include "Estilos.h"
+#include "styles/FlutterTheme.h"
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QProgressBar>
+#include <QTimer>
+#include <QVBoxLayout>
+
 
 SimuladorRendimiento::SimuladorRendimiento(QWidget *parent) : QWidget(parent) {
   configurarUi();
+  FlutterTheme::instance().applyThemeToWidget(this);
   // Simular datos iniciales
   QTimer::singleShot(500, this, &SimuladorRendimiento::actualizarEstimacion);
 }
 
 void SimuladorRendimiento::configurarUi() {
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->setSpacing(12);
+  layout->setSpacing(16);
   layout->setContentsMargins(0, 0, 0, 0);
 
   // Metricas principales
   QHBoxLayout *metricsLayout = new QHBoxLayout();
-  metricsLayout->setSpacing(12);
+  metricsLayout->setSpacing(16);
 
   // Latencia
-  QWidget *cardLatencia = new QWidget(this);
-  cardLatencia->setStyleSheet(R"(
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #e5e7eb;
-    border-left: 4px solid #2563eb;
-    border-radius: 8px;
-    padding: 10px;
-  )");
+  FlutterCard *cardLatencia = new FlutterCard(this);
+  cardLatencia->setStyleSheet("QFrame { background: white; border-radius: 8px; "
+                              "border-left: 4px solid #2563eb; }");
   QVBoxLayout *latLayout = new QVBoxLayout(cardLatencia);
   latLayout->setSpacing(4);
+  latLayout->setContentsMargins(12, 12, 12, 12);
 
   lblLatenciaEstimada = new QLabel("--", cardLatencia);
   lblLatenciaEstimada->setStyleSheet(
@@ -36,18 +39,20 @@ void SimuladorRendimiento::configurarUi() {
   latLayout->addWidget(lblLatenciaEstimada);
 
   QLabel *lblLatTxt = new QLabel("Latencia (ms)", cardLatencia);
-  lblLatTxt->setStyleSheet("font-size: 10px; color: #6b7280;");
+  lblLatTxt->setStyleSheet("font-size: 11px; font-weight: 600; text-transform: "
+                           "uppercase; color: #6b7280;");
   lblLatTxt->setAlignment(Qt::AlignCenter);
   latLayout->addWidget(lblLatTxt);
 
   metricsLayout->addWidget(cardLatencia);
 
   // Costo
-  QWidget *cardCosto = new QWidget(this);
-  cardCosto->setStyleSheet(
-      cardLatencia->styleSheet().replace("#2563eb", "#10b981"));
+  FlutterCard *cardCosto = new FlutterCard(this);
+  cardCosto->setStyleSheet("QFrame { background: white; border-radius: 8px; "
+                           "border-left: 4px solid #10b981; }");
   QVBoxLayout *costoLayout = new QVBoxLayout(cardCosto);
   costoLayout->setSpacing(4);
+  costoLayout->setContentsMargins(12, 12, 12, 12);
 
   lblCostoEstimado = new QLabel("--", cardCosto);
   lblCostoEstimado->setStyleSheet(
@@ -56,7 +61,8 @@ void SimuladorRendimiento::configurarUi() {
   costoLayout->addWidget(lblCostoEstimado);
 
   QLabel *lblCostoTxt = new QLabel("Costo CPU", cardCosto);
-  lblCostoTxt->setStyleSheet("font-size: 10px; color: #6b7280;");
+  lblCostoTxt->setStyleSheet("font-size: 11px; font-weight: 600; "
+                             "text-transform: uppercase; color: #6b7280;");
   lblCostoTxt->setAlignment(Qt::AlignCenter);
   costoLayout->addWidget(lblCostoTxt);
 
@@ -66,26 +72,24 @@ void SimuladorRendimiento::configurarUi() {
 
   // Indice de optimizacion
   QLabel *lblOpt = new QLabel("Indice de Optimizacion", this);
-  lblOpt->setStyleSheet("font-weight: 600; color: #374151; font-size: 11px;");
+  lblOpt->setStyleSheet("font-size: 13px; font-weight: 600; color: #374151;");
   layout->addWidget(lblOpt);
 
   barIndiceOptimizacion = new QProgressBar(this);
   barIndiceOptimizacion->setRange(0, 100);
   barIndiceOptimizacion->setValue(0);
-  barIndiceOptimizacion->setMinimumHeight(20);
+  barIndiceOptimizacion->setMinimumHeight(12);
+  barIndiceOptimizacion->setTextVisible(false); // Clean look
   barIndiceOptimizacion->setStyleSheet(R"(
     QProgressBar {
       border: none;
-      border-radius: 10px;
+      border-radius: 6px;
       background-color: #e5e7eb;
-      text-align: center;
-      font-size: 10px;
-      font-weight: 600;
     }
     QProgressBar::chunk {
       background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
         stop:0 #f59e0b, stop:1 #10b981);
-      border-radius: 10px;
+      border-radius: 6px;
     }
   )");
   layout->addWidget(barIndiceOptimizacion);
@@ -93,18 +97,18 @@ void SimuladorRendimiento::configurarUi() {
   // Recomendaciones
   QLabel *lblRec = new QLabel("Recomendaciones", this);
   lblRec->setStyleSheet(
-      "font-weight: 600; color: #374151; font-size: 11px; margin-top: 8px;");
+      "font-size: 13px; font-weight: 600; color: #374151; margin-top: 8px;");
   layout->addWidget(lblRec);
 
   lblRecomendaciones = new QLabel("Analizando modelo...", this);
   lblRecomendaciones->setWordWrap(true);
   lblRecomendaciones->setStyleSheet(R"(
-    background: rgba(254, 252, 232, 0.9);
-    border: 1px solid #fef08a;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
     border-radius: 6px;
-    padding: 8px;
-    font-size: 11px;
-    color: #854d0e;
+    padding: 12px;
+    font-size: 12px;
+    color: #92400e;
   )");
   layout->addWidget(lblRecomendaciones);
 
@@ -147,11 +151,11 @@ void SimuladorRendimiento::actualizarEstimacion() {
     recs = "Excelente! Modelo altamente optimizado.\n"
            "No se requieren acciones adicionales.";
     lblRecomendaciones->setStyleSheet(R"(
-      background: rgba(220, 252, 231, 0.9);
+      background: #f0fdf4;
       border: 1px solid #86efac;
       border-radius: 6px;
-      padding: 8px;
-      font-size: 11px;
+      padding: 12px;
+      font-size: 12px;
       color: #166534;
     )");
   }

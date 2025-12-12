@@ -1,7 +1,8 @@
 #include "DialogoConexion.h"
 #include "../core/GestorBaseDatos.h"
-#include "Estilos.h"
 #include "ToastNotifier.h"
+#include "styles/FlutterTheme.h"
+#include "widgets/FlutterWidgets.h"
 #include <QCoreApplication>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -15,6 +16,7 @@
 #include <QSqlQuery>
 #include <QTimer>
 
+
 DialogoConexion::DialogoConexion(QWidget *parent) : QDialog(parent) {
   setAcceptDrops(true);
   configurarUi();
@@ -24,142 +26,85 @@ DialogoConexion::~DialogoConexion() {}
 
 void DialogoConexion::configurarUi() {
   setWindowTitle("Conexion - Cubo Vision");
-  setFixedSize(420, 560);
+  setFixedSize(420, 600);
   setModal(true);
 
+  // Apply Theme
+  FlutterTheme::instance().applyThemeToWidget(this);
+
   QVBoxLayout *mainLayout = new QVBoxLayout(this);
-  mainLayout->setSpacing(12);
-  mainLayout->setContentsMargins(28, 24, 28, 24);
+  mainLayout->setSpacing(16);
+  mainLayout->setContentsMargins(24, 24, 24, 24);
 
   // Titulo
   QLabel *lblTitulo = new QLabel("Cubo Vision", this);
   lblTitulo->setStyleSheet(
-      "font-size: 22px; font-weight: 700; color: #1e3a8a;");
+      "font-size: 24px; font-weight: 700; color: #6750a4;"); // Primary
   lblTitulo->setAlignment(Qt::AlignCenter);
   mainLayout->addWidget(lblTitulo);
 
   QLabel *lblSubtitulo = new QLabel("Conectar a PostgreSQL", this);
   lblSubtitulo->setStyleSheet(
-      "font-size: 12px; color: #64748b; margin-bottom: 12px;");
+      "font-size: 14px; margin-bottom: 12px; opacity: 0.7;");
   lblSubtitulo->setAlignment(Qt::AlignCenter);
   mainLayout->addWidget(lblSubtitulo);
 
-  // Formulario
-  QWidget *formWidget = new QWidget(this);
-  formWidget->setStyleSheet(R"(
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-  )");
-  QFormLayout *formLayout = new QFormLayout(formWidget);
-  formLayout->setSpacing(12);
-  formLayout->setContentsMargins(16, 16, 16, 16);
-  formLayout->setLabelAlignment(Qt::AlignRight);
+  // Card Container for Form
+  FlutterCard *card = new FlutterCard(this, 1);
+  QVBoxLayout *cardLayout = new QVBoxLayout(card);
+  cardLayout->setSpacing(16);
+  cardLayout->setContentsMargins(16, 24, 16, 24);
 
-  QString inputStyle = R"(
-    QLineEdit, QSpinBox, QComboBox {
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 13px;
-    }
-    QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
-      border: 2px solid #2563eb;
-    }
-  )";
+  // Form Inputs
+  inputHost = new FlutterTextField("Host (ej: localhost)", this);
+  inputHost->setText("localhost");
+  cardLayout->addWidget(inputHost);
 
-  QString labelStyle = "font-size: 12px; color: #374151; font-weight: 500;";
-
-  inputHost = new QLineEdit("localhost", this);
-  inputHost->setStyleSheet(inputStyle);
-  inputHost->setPlaceholderText("ej: localhost o 192.168.1.1");
-  QLabel *lblHost = new QLabel("Host:", this);
-  lblHost->setStyleSheet(labelStyle);
-  formLayout->addRow(lblHost, inputHost);
+  // Puerto (SpinBox needs native styling or wrapper, keeping simple for now)
+  QLabel *lblPort = new QLabel("Puerto", this);
+  lblPort->setProperty("floating-label", "true");
+  cardLayout->addWidget(lblPort);
 
   inputPuerto = new QSpinBox(this);
   inputPuerto->setRange(1, 65535);
   inputPuerto->setValue(5432);
-  inputPuerto->setStyleSheet(inputStyle);
-  QLabel *lblPuerto = new QLabel("Puerto:", this);
-  lblPuerto->setStyleSheet(labelStyle);
-  formLayout->addRow(lblPuerto, inputPuerto);
+  inputPuerto->setFixedHeight(40);
+  cardLayout->addWidget(inputPuerto);
 
-  inputUsuario = new QLineEdit("postgres", this);
-  inputUsuario->setStyleSheet(inputStyle);
-  inputUsuario->setPlaceholderText("ej: postgres");
-  QLabel *lblUsuario = new QLabel("Usuario:", this);
-  lblUsuario->setStyleSheet(labelStyle);
-  formLayout->addRow(lblUsuario, inputUsuario);
+  inputUsuario = new FlutterTextField("Usuario", this);
+  inputUsuario->setText("postgres");
+  cardLayout->addWidget(inputUsuario);
 
-  inputPassword = new QLineEdit("laza", this);
+  inputPassword = new FlutterTextField("Contraseña", this);
+  inputPassword->setText("laza");
   inputPassword->setEchoMode(QLineEdit::Password);
-  inputPassword->setStyleSheet(inputStyle);
-  QLabel *lblPassword = new QLabel("Clave:", this);
-  lblPassword->setStyleSheet(labelStyle);
-  formLayout->addRow(lblPassword, inputPassword);
+  cardLayout->addWidget(inputPassword);
 
-  // Base de datos - Layout Horizontal con Combo y Boton
+  // Database
   QHBoxLayout *bdLayout = new QHBoxLayout();
   comboBaseDatos = new QComboBox(this);
   comboBaseDatos->setEditable(true);
   comboBaseDatos->setPlaceholderText("bd2025");
-  comboBaseDatos->addItem("bd2025"); // Default
-  comboBaseDatos->setStyleSheet(inputStyle);
+  comboBaseDatos->addItem("bd2025");
   comboBaseDatos->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  comboBaseDatos->setFixedHeight(40);
 
   btnActualizarBD = new QPushButton("🔄", this);
-  btnActualizarBD->setToolTip("Listar bases de datos disponibles");
   btnActualizarBD->setFixedWidth(40);
-  btnActualizarBD->setStyleSheet(R"(
-    QPushButton {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      color: #3b82f6;
-      font-size: 16px;
-      font-weight: bold;
-    }
-    QPushButton:hover {
-      background: #e2e8f0;
-      border-color: #3b82f6;
-    }
-  )");
+  btnActualizarBD->setFixedHeight(40);
+  // TODO: Use FlutterIconButton if time permits replacing this
   connect(btnActualizarBD, &QPushButton::clicked, this,
           &DialogoConexion::actualizarBasesDatos);
 
   bdLayout->addWidget(comboBaseDatos);
   bdLayout->addWidget(btnActualizarBD);
+  cardLayout->addLayout(bdLayout);
 
-  QLabel *lblBase = new QLabel("Base de Datos:", this);
-  lblBase->setStyleSheet(labelStyle);
-  formLayout->addRow(lblBase, bdLayout);
-
-  mainLayout->addWidget(formWidget);
+  mainLayout->addWidget(card);
 
   // Boton conectar
-  btnConectar = new QPushButton("Conectar", this);
-  btnConectar->setMinimumHeight(44);
-  btnConectar->setCursor(Qt::PointingHandCursor);
-  btnConectar->setStyleSheet(R"(
-    QPushButton {
-      background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #2563eb, stop:1 #6366f1);
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    QPushButton:hover {
-      background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #1d4ed8, stop:1 #4f46e5);
-    }
-    QPushButton:disabled {
-      background: #94a3b8;
-    }
-  )");
+  btnConectar = new FlutterElevatedButton("CONECTAR", this);
+  btnConectar->setMinimumHeight(48);
   mainLayout->addWidget(btnConectar);
 
   // Zona SQL
@@ -206,9 +151,9 @@ void DialogoConexion::configurarUi() {
 }
 
 void DialogoConexion::actualizarBasesDatos() {
-  QString host = inputHost->text().trimmed();
+  QString host = inputHost->text();
   int puerto = inputPuerto->value();
-  QString usuario = inputUsuario->text().trimmed();
+  QString usuario = inputUsuario->text();
   QString password = inputPassword->text();
 
   if (host.isEmpty() || usuario.isEmpty()) {

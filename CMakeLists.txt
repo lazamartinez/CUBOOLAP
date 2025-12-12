@@ -15,13 +15,18 @@ find_package(Qt6 COMPONENTS Widgets Sql Charts Gui Core REQUIRED)
 # Archivos fuente
 set(PROJECT_SOURCES
     src/main.cpp
+    src/resources.qrc
+    src/ui/styles/FlutterColors.h
+    src/ui/styles/FlutterTheme.h
+    src/ui/styles/FlutterTheme.cpp
+    src/ui/icons/MaterialIcons.h
+    src/ui/widgets/FlutterWidgets.h
     src/ui/VentanaPrincipal.cpp
     src/ui/VentanaPrincipal.h
     src/ui/DialogoConexion.cpp
     src/ui/DialogoConexion.h
     src/ui/DashboardReconocimiento.cpp
     src/ui/DashboardReconocimiento.h
-    src/ui/Estilos.h
     src/core/GestorBaseDatos.cpp
     src/core/GestorBaseDatos.h
     src/core/AnalizadorEsquema.cpp
@@ -50,10 +55,6 @@ set(PROJECT_SOURCES
     src/core/GeneradorReportes.h
     src/ui/PantallaIntroduccion.cpp
     src/ui/PantallaIntroduccion.h
-    src/ui/GestorTemas.cpp
-    src/ui/GestorTemas.h
-    src/ui/IndicadorFase.cpp
-    src/ui/IndicadorFase.h
     src/ui/ToastNotifier.cpp
     src/ui/ToastNotifier.h
     src/ui/HistorialConsultas.cpp

@@ -1,8 +1,14 @@
 #include "HistorialConsultas.h"
+#include "styles/FlutterTheme.h"
+#include <QDateTime>
 #include <QLabel>
+#include <QListWidget>
+#include <QVBoxLayout>
+
 
 HistorialConsultas::HistorialConsultas(QWidget *parent) : QWidget(parent) {
   configurarUi();
+  FlutterTheme::instance().applyThemeToWidget(this);
 }
 
 void HistorialConsultas::configurarUi() {
@@ -12,7 +18,7 @@ void HistorialConsultas::configurarUi() {
 
   QLabel *lblTitulo = new QLabel("Historial", this);
   lblTitulo->setStyleSheet(
-      "font-size: 12px; font-weight: 600; color: #374151;");
+      "font-size: 14px; font-weight: 600; color: #374151;");
   layout->addWidget(lblTitulo);
 
   listaHistorial = new QListWidget(this);
@@ -20,13 +26,14 @@ void HistorialConsultas::configurarUi() {
   listaHistorial->setStyleSheet(R"(
     QListWidget {
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #d1d5db;
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 12px;
+      color: #1f2937;
     }
     QListWidget::item {
       padding: 8px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e5e7eb;
     }
     QListWidget::item:hover {
       background: #eff6ff;
@@ -47,22 +54,17 @@ void HistorialConsultas::configurarUi() {
 
   layout->addWidget(listaHistorial);
 
-  btnLimpiar = new QPushButton("Limpiar Historial", this);
-  btnLimpiar->setStyleSheet(R"(
-    QPushButton {
-      background: transparent;
-      border: none;
-      color: #ef4444;
-      font-size: 10px;
-      padding: 4px;
-    }
-    QPushButton:hover {
-      text-decoration: underline;
-    }
-  )");
+  btnLimpiar = new FlutterTextButton("Limpiar Historial", this);
+  // Manual override for danger color if desired, but default is fine or we can
+  // set it
+  btnLimpiar->setStyleSheet(
+      "QPushButton { color: #ef4444; font-weight: 600; font-size: 12px; "
+      "border: none; } QPushButton:hover { background: #fee2e2; border-radius: "
+      "4px; }");
+
   connect(btnLimpiar, &QPushButton::clicked, this,
           &HistorialConsultas::limpiarHistorial);
-  layout->addWidget(btnLimpiar);
+  layout->addWidget(btnLimpiar, 0, Qt::AlignRight);
 }
 
 void HistorialConsultas::agregarConsulta(const QString &consulta, int registros,

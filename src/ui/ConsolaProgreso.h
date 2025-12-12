@@ -1,12 +1,14 @@
 #ifndef CONSOLAPROGRESO_H
 #define CONSOLAPROGRESO_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QTextEdit>
 #include <QVBoxLayout>
 #include <QWidget>
+
 
 /**
  * @brief Consola de progreso para Fase 3 (Carga de Datos)

@@ -1,11 +1,13 @@
 #ifndef SIMULADORRENDIMIENTO_H
 #define SIMULADORRENDIMIENTO_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QLabel>
 #include <QProgressBar>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+
 
 /**
  * @brief Simulador de rendimiento predictivo para modelos OLAP

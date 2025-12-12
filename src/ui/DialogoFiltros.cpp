@@ -1,4 +1,5 @@
 #include "DialogoFiltros.h"
+#include "styles/FlutterTheme.h"
 
 DialogoFiltros::DialogoFiltros(Modo modo, QWidget *parent)
     : QDialog(parent), m_modo(modo) {
@@ -114,84 +115,55 @@ void DialogoFiltros::configurarUi() {
 }
 
 void DialogoFiltros::aplicarEstilos() {
-  setStyleSheet(R"(
+  bool dark = FlutterTheme::instance().darkMode();
+  QString bg = dark ? "#1f2937" : "#ffffff";
+  QString text = dark ? "#f3f4f6" : "#1e293b";
+  QString border = dark ? "#374151" : "#e2e8f0";
+  QString inputBg = dark ? "#374151" : "#ffffff";
+
+  setStyleSheet(QString(R"(
         QDialog {
-            background: #ffffff;
+            background: %1;
         }
         QLabel {
-            color: #1e293b;
+            color: %2;
             font-weight: 600;
             font-size: 11pt;
         }
         QGroupBox {
-            color: #475569;
+            color: %2;
             font-weight: 600;
-            border: 2px solid #e2e8f0;
+            border: 1px solid %3;
             border-radius: 8px;
             margin-top: 12px;
             padding-top: 14px;
-            background: #f8fafc;
+            background: transparent;
         }
         QGroupBox::title {
             subcontrol-origin: margin;
             left: 10px;
             padding: 0 8px;
-            background: #ffffff;
+            background: %1;
         }
         QComboBox {
-            background: #ffffff;
-            color: #1e293b;
-            border: 2px solid #cbd5e1;
+            background: %4;
+            color: %2;
+            border: 1px solid %3;
             border-radius: 6px;
             padding: 8px 12px;
             font-size: 10pt;
         }
-        QComboBox:hover {
-            border-color: #3b82f6;
-            background: #f8fafc;
-        }
-        QComboBox:focus {
-            border-color: #3b82f6;
-        }
-        QComboBox::drop-down {
-            border: none;
-            width: 30px;
-        }
-        QComboBox::down-arrow {
-            image: none;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 6px solid #3b82f6;
-            margin-right: 8px;
-        }
         QListWidget {
-            background: #ffffff;
-            color: #1e293b;
-            border: 2px solid #cbd5e1;
+            background: %4;
+            color: %2;
+            border: 1px solid %3;
             border-radius: 8px;
             padding: 6px;
             font-size: 10pt;
         }
-        QListWidget:hover {
-            border-color: #3b82f6;
-        }
-        QListWidget:focus {
-            border-color: #3b82f6;
-        }
-        QListWidget::item {
-            padding: 8px 12px;
-            border-radius: 5px;
-            margin: 2px;
-            color: #1e293b;
-        }
-        QListWidget::item:hover {
-            background: #eff6ff;
-            color: #1e40af;
-        }
         QListWidget::item:selected {
             background: #3b82f6;
             color: #ffffff;
-            font-weight: 600;
         }
         QPushButton {
             background: #3b82f6;
@@ -202,23 +174,12 @@ void DialogoFiltros::aplicarEstilos() {
             font-weight: 600;
             font-size: 10pt;
         }
-        QPushButton:hover {
-            background: #2563eb;
-        }
-        QPushButton:pressed {
-            background: #1d4ed8;
-        }
         QPushButton#btnCancelar {
-            background: #e2e8f0;
-            color: #475569;
+            background: %3;
+            color: %2;
         }
-        QPushButton#btnCancelar:hover {
-            background: #cbd5e1;
-            color: #1e293b;
-        }
-    )");
-
-  btnCancelar->setObjectName("btnCancelar");
+    )")
+                    .arg(bg, text, border, inputBg));
 }
 
 void DialogoFiltros::setDimensionesDisponibles(const QStringList &dimensiones) {

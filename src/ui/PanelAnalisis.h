@@ -1,10 +1,12 @@
 #ifndef PANELANALISIS_H
 #define PANELANALISIS_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+
 
 /**
  * @brief Panel lateral de analisis para Fase 4

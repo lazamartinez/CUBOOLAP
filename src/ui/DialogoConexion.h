@@ -1,6 +1,7 @@
 #ifndef DIALOGOCONEXION_H
 #define DIALOGOCONEXION_H
 
+#include "widgets/FlutterWidgets.h"
 #include <QComboBox>
 #include <QDialog>
 #include <QFrame>
@@ -9,7 +10,6 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
-
 
 class DialogoConexion : public QDialog {
   Q_OBJECT
@@ -37,14 +37,15 @@ private:
   void actualizarBasesDatos();
 
   // Campos de conexion
-  QLineEdit *inputHost;
-  QSpinBox *inputPuerto;
-  QLineEdit *inputUsuario;
-  QLineEdit *inputPassword;
+  FlutterTextField *inputHost;
+  QSpinBox *inputPuerto; // Keeping SpinBox for numeric input for now (styling
+                         // via QSS)
+  FlutterTextField *inputUsuario;
+  FlutterTextField *inputPassword;
   QComboBox *comboBaseDatos;
   QPushButton *btnActualizarBD;
 
-  QPushButton *btnConectar;
+  FlutterElevatedButton *btnConectar;
   QLabel *lblEstado;
 
   // Zona Drop

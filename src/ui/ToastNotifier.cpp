@@ -1,7 +1,13 @@
 #include "ToastNotifier.h"
+#include "styles/FlutterTheme.h"
 #include <QApplication>
 #include <QGraphicsDropShadowEffect>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPropertyAnimation>
 #include <QScreen>
+#include <QTimer>
+
 
 void ToastNotifier::mostrar(QWidget *parent, const QString &mensaje,
                             TipoToast tipo, int duracion) {
@@ -32,28 +38,34 @@ void ToastNotifier::configurarUi(const QString &mensaje, TipoToast tipo) {
 
   // Mensaje
   QLabel *lblMensaje = new QLabel(mensaje, this);
-  lblMensaje->setStyleSheet(
-      "font-size: 13px; color: #1e293b; font-weight: 500;");
   lblMensaje->setWordWrap(true);
   lblMensaje->setMaximumWidth(300);
   layout->addWidget(lblMensaje);
 
   // Estilo del contenedor
   QString borderColor = obtenerColor(tipo);
+  bool dark = FlutterTheme::instance().darkMode();
+  QString bg = dark ? "#1f2937" : "white"; // Gray 800 vs White
+  QString border = dark ? "#374151" : "#e2e8f0";
+  QString textColor = dark ? "#f3f4f6" : "#1e293b";
+
+  lblMensaje->setStyleSheet(
+      QString("font-size: 13px; color: %1; font-weight: 500;").arg(textColor));
+
   setStyleSheet(QString(R"(
     ToastNotifier {
-      background: white;
-      border: 1px solid #e2e8f0;
+      background: %2;
+      border: 1px solid %3;
       border-left: 4px solid %1;
       border-radius: 8px;
     }
   )")
-                    .arg(borderColor));
+                    .arg(borderColor, bg, border));
 
   // Sombra
   QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
   shadow->setBlurRadius(20);
-  shadow->setColor(QColor(0, 0, 0, 40));
+  shadow->setColor(dark ? QColor(0, 0, 0, 100) : QColor(0, 0, 0, 40));
   shadow->setOffset(0, 4);
   setGraphicsEffect(shadow);
 

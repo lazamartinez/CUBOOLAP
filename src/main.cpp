@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   aplicacion.setOrganizationName("OLAP 2025");
 
   // Estilo base (se puede mejorar luego con QSS)
-  aplicacion.setStyle("Fusion");
+  // aplicacion.setStyle("Fusion"); // Removed in favor of FlutterTheme
 
   // Inicializar y mostrar la ventana principal
   // La conexión se manejará dentro de la ventana principal o un diálogo previo

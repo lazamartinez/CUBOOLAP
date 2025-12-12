@@ -111,6 +111,7 @@ public:
   MetadataCubo obtenerMetadata() const { return m_metadata; }
   ConfigVisualizacion obtenerConfig() const { return m_config; }
   void aplicarConfig(const ConfigVisualizacion &config);
+  void actualizarColoresTema();
 
 public slots:
   // ========== OPERACIONES OLAP ==========

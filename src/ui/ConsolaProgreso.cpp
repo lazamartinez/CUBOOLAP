@@ -1,32 +1,27 @@
 #include "ConsolaProgreso.h"
-#include "Estilos.h"
+#include "styles/FlutterTheme.h"
 #include <QDateTime>
 #include <QGroupBox>
 #include <QScrollBar>
 
 ConsolaProgreso::ConsolaProgreso(QWidget *parent) : QWidget(parent) {
   configurarUi();
+  FlutterTheme::instance().applyThemeToWidget(this);
 }
 
 void ConsolaProgreso::configurarUi() {
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->setSpacing(10);
+  layout->setSpacing(16);
   layout->setContentsMargins(16, 16, 16, 16);
 
   // Header
   QLabel *header = new QLabel("Fase 3: Carga de Datos", this);
-  header->setStyleSheet(R"(
-    font-size: 16px;
-    font-weight: 700;
-    color: #1f2937;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #10b981;
-  )");
+  header->setStyleSheet("font-size: 20px; font-weight: 700; color: #1f2937;");
   layout->addWidget(header);
 
   // Stats compactas
   QHBoxLayout *statsLayout = new QHBoxLayout();
-  statsLayout->setSpacing(8);
+  statsLayout->setSpacing(12);
 
   QWidget *cardRegistros = crearCardEstadistica("Registros", "0", "#2563eb");
   statsLayout->addWidget(cardRegistros);
@@ -50,40 +45,40 @@ void ConsolaProgreso::configurarUi() {
   barProgreso = new QProgressBar(this);
   barProgreso->setRange(0, 100);
   barProgreso->setValue(0);
-  barProgreso->setMinimumHeight(20);
-  barProgreso->setMaximumHeight(20);
+  barProgreso->setMinimumHeight(8); // Thinner, more Material
+  barProgreso->setMaximumHeight(8);
+  barProgreso->setTextVisible(false);
   barProgreso->setStyleSheet(R"(
     QProgressBar {
       border: none;
-      border-radius: 10px;
-      background: #e5e7eb;
-      text-align: center;
-      font-size: 10px;
+      border-radius: 4px;
+      background-color: #e5e7eb;
     }
     QProgressBar::chunk {
-      background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #6366f1);
-      border-radius: 10px;
+      background-color: #2563eb;
+      border-radius: 4px;
     }
   )");
   layout->addWidget(barProgreso);
 
   lblEstado = new QLabel("Preparando...", this);
-  lblEstado->setStyleSheet("color: #6b7280; font-size: 11px;");
+  lblEstado->setStyleSheet(
+      "color: #6b7280; font-size: 14px; font-weight: 500;");
   layout->addWidget(lblEstado);
 
   // Logs
   QHBoxLayout *logsLayout = new QHBoxLayout();
-  logsLayout->setSpacing(10);
+  logsLayout->setSpacing(16);
 
   // Log principal
-  QWidget *logContainer = new QWidget(this);
-  logContainer->setStyleSheet(
-      "background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;");
+  FlutterCard *logContainer = new FlutterCard(this);
   QVBoxLayout *lLayout = new QVBoxLayout(logContainer);
-  lLayout->setContentsMargins(8, 8, 8, 8);
+  lLayout->setContentsMargins(12, 12, 12, 12);
+  lLayout->setSpacing(8);
 
-  QLabel *lblLog = new QLabel("Bitacora", logContainer);
-  lblLog->setStyleSheet("font-size: 11px; font-weight: 600; color: #374151;");
+  QLabel *lblLog = new QLabel("Bitancora del Proceso", logContainer);
+  lblLog->setStyleSheet("font-size: 14px; font-weight: 600; text-transform: "
+                        "uppercase; color: #374151;");
   lLayout->addWidget(lblLog);
 
   txtLog = new QTextEdit(this);
@@ -93,35 +88,38 @@ void ConsolaProgreso::configurarUi() {
     QTextEdit {
       background: #1f2937;
       color: #10b981;
-      font-family: Consolas, monospace;
-      font-size: 12px;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
       border: none;
       border-radius: 4px;
+      padding: 8px;
     }
   )");
   lLayout->addWidget(txtLog);
   logsLayout->addWidget(logContainer, 2);
 
   // Alertas
-  QWidget *alertContainer = new QWidget(this);
+  FlutterCard *alertContainer = new FlutterCard(this);
   alertContainer->setStyleSheet(
-      "background: #fefce8; border: 1px solid #fef08a; border-radius: 6px;");
+      "QFrame { background-color: #fffbeb; }"); // Yellow tint base
   QVBoxLayout *aLayout = new QVBoxLayout(alertContainer);
-  aLayout->setContentsMargins(8, 8, 8, 8);
+  aLayout->setContentsMargins(12, 12, 12, 12);
+  aLayout->setSpacing(8);
 
-  QLabel *lblAlert = new QLabel("Alertas", alertContainer);
-  lblAlert->setStyleSheet("font-size: 11px; font-weight: 600; color: #854d0e;");
+  QLabel *lblAlert = new QLabel("Alertas de Calidad", alertContainer);
+  lblAlert->setStyleSheet("font-size: 14px; font-weight: 600; text-transform: "
+                          "uppercase; color: #92400e;");
   aLayout->addWidget(lblAlert);
 
   txtAlertas = new QTextEdit(this);
   txtAlertas->setReadOnly(true);
   txtAlertas->setMinimumHeight(250);
-  txtAlertas->setPlaceholderText("Sin alertas");
+  txtAlertas->setPlaceholderText("Sin alertas de calidad detectadas.");
   txtAlertas->setStyleSheet(R"(
     QTextEdit {
       background: transparent;
       color: #92400e;
-      font-size: 12px;
+      font-size: 13px;
       border: none;
     }
   )");
@@ -131,20 +129,9 @@ void ConsolaProgreso::configurarUi() {
   layout->addLayout(logsLayout);
 
   // Boton continuar
-  btnContinuar = new QPushButton("🔍 Explorar Cubo (Fase 4)", this);
-  btnContinuar->setMinimumHeight(36);
-  btnContinuar->setCursor(Qt::PointingHandCursor);
-  btnContinuar->setStyleSheet(R"(
-    QPushButton {
-      background: #10b981;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    QPushButton:hover { background: #059669; }
-  )");
+  btnContinuar = new FlutterFilledButton("🔍 Explorar Cubo (Fase 4)", this);
+  btnContinuar->setMinimumHeight(48);
+  btnContinuar->setIcon(MaterialIcons::instance().search());
   btnContinuar->setVisible(false);
   btnContinuar->setEnabled(false);
   connect(btnContinuar, &QPushButton::clicked, this,
@@ -155,26 +142,30 @@ void ConsolaProgreso::configurarUi() {
 QWidget *ConsolaProgreso::crearCardEstadistica(const QString &etiqueta,
                                                const QString &valor,
                                                const QString &color) {
-  QWidget *card = new QWidget(this);
+  FlutterCard *card = new FlutterCard(this);
   card->setStyleSheet(QString(R"(
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-left: 3px solid %1;
-    border-radius: 6px;
+      QFrame {
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid %1;
+      }
   )")
                           .arg(color));
 
   QVBoxLayout *layout = new QVBoxLayout(card);
   layout->setSpacing(2);
-  layout->setContentsMargins(8, 6, 8, 6);
+  layout->setContentsMargins(12, 12, 12, 12);
 
   QLabel *lblValor = new QLabel(valor, card);
   lblValor->setObjectName("valorCard");
   lblValor->setStyleSheet(
-      QString("font-size: 16px; font-weight: 700; color: %1;").arg(color));
+      QString("font-size: 24px; font-weight: 700; color: %1;").arg(color));
+  lblValor->setAlignment(Qt::AlignCenter);
 
   QLabel *lblEtiqueta = new QLabel(etiqueta, card);
-  lblEtiqueta->setStyleSheet("font-size: 9px; color: #6b7280;");
+  lblEtiqueta->setStyleSheet("font-size: 12px; font-weight: 600; "
+                             "text-transform: uppercase; color: #6b7280;");
+  lblEtiqueta->setAlignment(Qt::AlignCenter);
 
   layout->addWidget(lblValor);
   layout->addWidget(lblEtiqueta);

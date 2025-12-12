@@ -2,6 +2,7 @@
 #define CONSTRUCTORCONSULTAS_H
 
 #include "HistorialConsultas.h"
+#include "widgets/FlutterWidgets.h"
 #include <QComboBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -11,6 +12,7 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QWidget>
+
 
 /**
  * @brief Constructor visual de consultas OLAP (Fase 5) - Avanzado
